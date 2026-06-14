@@ -2742,9 +2742,19 @@ function clearAll() {
 // ── Supabase Client ─────────────────────────────────────────
 const SUPABASE_URL  = 'https://vuenlryuxivpercujjqr.supabase.co';
 const SUPABASE_KEY  = 'sb_publishable_7xtZ-okNnAevAaYfce-Cqw_wSuhkfcR';
-const sb = (typeof supabase !== 'undefined')
-  ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-  : null;
+// Supabase Client - das UMD-Bundle definiert window.supabase
+var sb = null;
+try {
+  var _supa = window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+  if (_supa && _supa.createClient) {
+    sb = _supa.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('✅ Supabase Client erstellt');
+  } else {
+    console.warn('⚠️ Supabase nicht gefunden');
+  }
+} catch(e) {
+  console.warn('⚠️ Supabase Client Fehler:', e.message);
+}
 
 // ── Auth State ───────────────────────────────────────────────
 let SB_USER = null; // Supabase auth user (hat .id = UUID)
@@ -3224,11 +3234,12 @@ async function adminDeleteUser(uid) {
 // ============================================================
 
 async function sbInit() {
-  // Warte kurz bis CDN-Script geladen ist
-  if (typeof supabase === 'undefined' || window._supabaseLoadFailed) {
-    console.warn('Supabase nicht verfügbar – starte im Offline-Modus (localStorage)');
+  // Prüfe ob Supabase korrekt geladen und sb-Client erstellt wurde
+  if (!sb || !sb.auth) {
+    console.warn('Supabase Client nicht verfügbar – starte im Offline-Modus (localStorage)');
     try { var u = localStorage.getItem('pd_users'); if (u) USERS = JSON.parse(u); } catch(e) {}
     renderLoginScreen();
+    injectAuthUI();
     return;
   }
   showLoading('PigeonData wird gestartet…');
