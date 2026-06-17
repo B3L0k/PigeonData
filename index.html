@@ -167,58 +167,43 @@ select.fi option{background:var(--sur);color:var(--tx)}
 <!-- LOGIN SCREEN -->
 <div class="login-screen" id="login-screen">
   <div class="login-logo">Pigeon<span>Data</span></div>
-  <div class="login-sub" id="login-sub">Bitte Benutzer wählen</div>
-  <div class="user-grid" id="user-grid"></div>
-  <p style="color:var(--mu);font-size:12px;text-align:center;margin-top:8px">Alle Daten werden lokal gespeichert</p>
+  <div class="login-sub" id="login-sub">Anmelden</div>
+
+  <div style="width:100%;max-width:340px">
+    <div class="fg"><label class="fl">Benutzername</label><input class="fi" id="lg-username" type="text" autocomplete="username" placeholder="Benutzername"></div>
+    <div class="fg"><label class="fl">Passwort</label><input class="fi" id="lg-password" type="password" autocomplete="current-password" placeholder="Passwort" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn1" onclick="doLogin()">Anmelden</button>
+    <div id="lg-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
+  </div>
 </div>
 
-<!-- PIN SCREEN -->
-<div class="pin-screen hidden" id="pin-screen">
-  <div class="pin-title" id="pin-screen-title">PIN eingeben</div>
-  <div class="pin-sub" id="pin-screen-sub"></div>
-  <div class="pin-dots" id="pin-dots">
-    <div class="pin-dot" id="pd0"></div>
-    <div class="pin-dot" id="pd1"></div>
-    <div class="pin-dot" id="pd2"></div>
-    <div class="pin-dot" id="pd3"></div>
+<!-- FORCE PASSWORD CHANGE SCREEN -->
+<div class="login-screen hidden" id="force-pw-screen">
+  <div class="login-logo">Pigeon<span>Data</span></div>
+  <div class="login-sub">Bitte neues Passwort festlegen</div>
+  <div style="width:100%;max-width:340px">
+    <div class="fg"><label class="fl">Neues Passwort</label><input class="fi" id="fpw-new" type="password" autocomplete="new-password"></div>
+    <div class="fg"><label class="fl">Passwort bestätigen</label><input class="fi" id="fpw-new2" type="password" autocomplete="new-password"></div>
+    <button class="btn1" onclick="doForcePasswordChange()">Passwort festlegen & weiter</button>
+    <div id="fpw-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
   </div>
-  <div class="pin-pad">
-    <button class="pin-btn" onclick="pinKey('1')">1</button>
-    <button class="pin-btn" onclick="pinKey('2')">2</button>
-    <button class="pin-btn" onclick="pinKey('3')">3</button>
-    <button class="pin-btn" onclick="pinKey('4')">4</button>
-    <button class="pin-btn" onclick="pinKey('5')">5</button>
-    <button class="pin-btn" onclick="pinKey('6')">6</button>
-    <button class="pin-btn" onclick="pinKey('7')">7</button>
-    <button class="pin-btn" onclick="pinKey('8')">8</button>
-    <button class="pin-btn" onclick="pinKey('9')">9</button>
-    <button class="pin-btn empty"></button>
-    <button class="pin-btn" onclick="pinKey('0')">0</button>
-    <button class="pin-btn del" onclick="pinDel()">⌫</button>
-  </div>
-  <div class="pin-error" id="pin-error"></div>
-  <button class="btn2" style="width:auto;padding:10px 24px;margin-top:24px" onclick="backToLogin()">← Zurück</button>
 </div>
 
-<!-- NEW USER SHEET -->
+
+
+<!-- NEW USER SHEET (Admin legt neuen Benutzer an) -->
 <div class="overlay" id="sh-new-user" onclick="oc(event,'sh-new-user')" style="z-index:1002">
  <div class="sheet">
   <div class="handle"></div>
-  <div class="stit">👤 Neues Profil</div>
-  <div class="fg" style="text-align:center;margin-bottom:20px">
-    <div id="nu-photo-preview" onclick="document.getElementById('nu-photo-input').click()" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer;margin:0 auto 10px;border:3px solid var(--bdr);overflow:hidden;position:relative">
-      <span id="nu-photo-emoji">👤</span>
-      <img id="nu-photo-img" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0">
-    </div>
-    <input type="file" id="nu-photo-input" accept="image/*" style="display:none" onchange="loadUserPhoto(this)">
-    <button type="button" class="btn2" style="width:auto;padding:7px 14px;margin-top:0;font-size:13px" onclick="document.getElementById('nu-photo-input').click()">📷 Foto</button>
-  </div>
-  <div class="fg"><label class="fl">Name</label><input class="fi" id="nu-name" placeholder="z.B. Maria, Thomas..." type="text"></div>
-  <div class="fg"><label class="fl">PIN (4 Ziffern, optional)</label><input class="fi" id="nu-pin" placeholder="Leer lassen = kein PIN" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*"></div>
-  <div class="fg"><label class="fl">PIN bestätigen</label><input class="fi" id="nu-pin2" placeholder="PIN wiederholen" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*"></div>
-  <div class="fg" id="nu-admin-wrap" style="display:none"><label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="nu-is-admin" style="width:18px;height:18px;accent-color:var(--acc)"> <span style="font-size:14px">👑 Als Admin anlegen</span></label></div>
-  <button class="btn1" onclick="saveNewUser()">Profil erstellen</button>
+  <div class="stit">👤 Neuen Benutzer anlegen</div>
+  <p style="color:var(--mu);font-size:13px;margin-bottom:14px">Lege Benutzername, E-Mail und ein vorläufiges Passwort fest. Der neue Benutzer muss es beim ersten Login ändern.</p>
+  <div class="fg"><label class="fl">Benutzername *</label><input class="fi" id="nu-username" placeholder="z.B. mmueller" type="text" autocomplete="off"></div>
+  <div class="fg"><label class="fl">Anzeigename</label><input class="fi" id="nu-name" placeholder="z.B. Maria Müller" type="text"></div>
+  <div class="fg"><label class="fl">E-Mail *</label><input class="fi" id="nu-email" placeholder="z.B. maria@beispiel.de" type="email"></div>
+  <div class="fg"><label class="fl">Vorläufiges Passwort *</label><input class="fi" id="nu-temppw" placeholder="Mind. 6 Zeichen" type="text"></div>
+  <button class="btn1" onclick="saveNewUser()">Benutzer anlegen</button>
   <button class="btn2" onclick="cs('sh-new-user')">Abbrechen</button>
+  <div id="nu-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
  </div>
 </div>
 
@@ -228,6 +213,45 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="handle"></div>
   <div class="stit">👤 Profil verwalten</div>
   <div id="user-settings-body"></div>
+ </div>
+</div>
+
+<!-- CHANGE EMAIL SHEET -->
+<div class="overlay" id="sh-change-email" onclick="oc(event,'sh-change-email')" style="z-index:1003">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit">📧 E-Mail hinterlegen</div>
+  <p style="color:var(--mu);font-size:13px;margin-bottom:14px">Wird nur für die Wiederherstellung deines Passworts genutzt.</p>
+  <div class="fg"><label class="fl">E-Mail (optional)</label><input class="fi" id="ce-email" type="email" placeholder="z.B. name@beispiel.de"></div>
+  <button class="btn1" onclick="saveOwnEmail()">Speichern</button>
+  <button class="btn2" onclick="cs('sh-change-email')">Abbrechen</button>
+  <div id="ce-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
+ </div>
+</div>
+
+<!-- CHANGE PASSWORD SHEET -->
+<div class="overlay" id="sh-change-password" onclick="oc(event,'sh-change-password')" style="z-index:1003">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit">🔑 Passwort ändern</div>
+  <div class="fg"><label class="fl">Neues Passwort</label><input class="fi" id="cp-new" type="password" autocomplete="new-password"></div>
+  <div class="fg"><label class="fl">Passwort bestätigen</label><input class="fi" id="cp-new2" type="password" autocomplete="new-password"></div>
+  <button class="btn1" onclick="saveOwnPassword()">Passwort ändern</button>
+  <button class="btn2" onclick="cs('sh-change-password')">Abbrechen</button>
+  <div id="cp-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
+ </div>
+</div>
+
+<!-- ADMIN RESET PASSWORD SHEET -->
+<div class="overlay" id="sh-admin-reset-pw" onclick="oc(event,'sh-admin-reset-pw')" style="z-index:1003">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit">🔑 Passwort zurücksetzen</div>
+  <p style="color:var(--mu);font-size:13px;margin-bottom:14px" id="arp-target-name"></p>
+  <div class="fg"><label class="fl">Neues vorläufiges Passwort</label><input class="fi" id="arp-new" type="text" placeholder="Mind. 6 Zeichen"></div>
+  <button class="btn1" onclick="saveAdminResetPassword()">Zurücksetzen</button>
+  <button class="btn2" onclick="cs('sh-admin-reset-pw')">Abbrechen</button>
+  <div id="arp-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
  </div>
 </div>
 
@@ -2078,6 +2102,8 @@ function renderAdminPage() {
   setAdminTab(CUR_ADMIN_TAB, document.querySelector('#admin-tabs .tab.on'));
 }
 
+function renderAdminUserList() { renderAdminUsers(); }
+
 function renderAdminUsers() {
   var list = document.getElementById('admin-user-list'); if (!list) return;
   if (USERS.length <= 1) { list.innerHTML='<div class="empty"><div class="ei">👥</div><p>Noch keine weiteren Profile.</p></div>'; return; }
@@ -2085,24 +2111,23 @@ function renderAdminUsers() {
     var av = u.photo
       ? '<img src="'+u.photo+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:50%">'
       : '<span style="font-size:20px">'+u.name.charAt(0).toUpperCase()+'</span>';
-    var uDB = null;
-    try { var raw = localStorage.getItem('pd_db_'+u.id); uDB = raw ? JSON.parse(raw) : null; } catch(e){}
-    var pigCount = uDB ? (uDB.pigeons||[]).length : 0;
-    var logCount = uDB ? (uDB.logs||[]).length : 0;
-    var role = isAdmin(u) ? '<span style="color:var(--acc);font-size:12px">👑 Admin</span>' : '<span style="color:var(--mu);font-size:12px">'+(u.pin?'🔒 PIN':'🔓 Kein PIN')+'</span>';
-    var delBtn = (u.id !== CUR_USER.id)
-      ? '<button class="ldel" style="width:auto;padding:6px 12px;font-size:12px" onclick="adminDeleteUser(&quot;'+u.id+'&quot;)">🗑️ Löschen</button>'
+    var role = isAdmin(u) ? '<span style="color:var(--acc);font-size:12px">👑 Admin</span>' : '<span style="color:var(--mu);font-size:12px">👤 Benutzer</span>';
+    var actions = (u.id !== CUR_USER.id)
+      ? '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+          '<button class="bexport" style="width:auto;padding:6px 10px;font-size:12px" onclick="openAdminResetPassword(&quot;'+u.id+'&quot;)">🔑 PW zurücksetzen</button>'+
+          '<button class="ldel" style="width:auto;padding:6px 10px;font-size:12px" onclick="adminDeleteUser(&quot;'+u.id+'&quot;)">🗑️ Löschen</button>'+
+        '</div>'
       : '<span style="font-size:11px;color:var(--mu)">Eigenes Profil</span>';
     return '<div class="lentry">'+
       '<div style="display:flex;align-items:center;gap:12px">'+
         '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;flex-shrink:0">'+av+'</div>'+
         '<div style="flex:1">'+
-          '<div style="font-weight:600;font-size:15px">'+u.name+'</div>'+
+          '<div style="font-weight:600;font-size:15px">'+u.name+' <span style="color:var(--mu);font-weight:400;font-size:12px">@'+(u.username||'—')+'</span></div>'+
           role+
-          '<div style="font-size:12px;color:var(--mu);margin-top:2px">🕊️ '+pigCount+' Tauben &nbsp;·&nbsp; 📋 '+logCount+' Einträge</div>'+
+          '<div style="font-size:12px;color:var(--mu);margin-top:2px">'+(u.email?'📧 '+u.email:'Keine E-Mail hinterlegt')+(u.must_change_pw?' · ⚠️ Muss PW ändern':'')+'</div>'+
         '</div>'+
-        delBtn+
       '</div>'+
+      '<div style="margin-top:10px">'+actions+'</div>'+
     '</div>';
   }).join('');
 }
@@ -2405,146 +2430,93 @@ var PIN_TARGET_USER = null;
 function isAdmin(u) { return u && u.role === 'admin'; }
 
 function renderLoginScreen() {
-  loadUsers();
-  var grid = document.getElementById('user-grid');
-  var admin = USERS.find(function(u){ return isAdmin(u); });
-  var adminLoggedIn = CUR_USER && isAdmin(CUR_USER);
-  var html = '';
-
-  // Determine which users to show
-  var visibleUsers = adminLoggedIn
-    ? USERS  // Admin sees everyone
-    : USERS; // Non-logged-in: show all so user can pick themselves
-
-  visibleUsers.forEach(function(u) {
-    var av = u.photo
-      ? '<img src="'+u.photo+'">'
-      : '<span>'+u.name.charAt(0).toUpperCase()+'</span>';
-    var badge = isAdmin(u)
-      ? '<div class="ut-lock" style="color:var(--acc)">👑 Admin</div>'
-      : '<div class="ut-lock">'+(u.pin?'🔒 PIN':'🔓 Offen')+'</div>';
-
-    // Delete button: only shown when admin is logged in, not for own profile
-    var delBtn = (adminLoggedIn && u.id !== CUR_USER.id)
-      ? '<div onclick="event.stopPropagation();adminDeleteUser(&quot;'+u.id+'&quot;)" style="position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:rgba(224,84,84,.2);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--red)">✕</div>'
-      : '';
-
-    html += '<div class="user-tile" onclick="selectUser(&quot;'+u.id+'&quot;)" style="position:relative">'+
-      delBtn+
-      '<div class="ut-av">'+av+'</div>'+
-      '<div class="ut-name">'+u.name+'</div>'+
-      badge+
-    '</div>';
-  });
-
-  // Show ＋ only if admin logged in OR no users yet
-  if (!admin || adminLoggedIn) {
-    html += '<div class="user-add" onclick="openNewUserSheet()">'+
-      '<div class="ut-av" style="width:56px;height:56px;border-radius:50%;background:transparent;border:2px dashed var(--bdr);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 8px">＋</div>'+
-      '<div class="ut-name" style="font-size:12px">Neu</div></div>';
-  }
-
-  grid.innerHTML = html;
-  var noAdmin = !admin;
-  var sub = document.getElementById('login-sub');
-  if (sub) sub.textContent = noAdmin
-    ? 'Kein Profil vorhanden. Erstes Profil wird automatisch Admin.'
-    : (adminLoggedIn ? 'Benutzer wählen oder verwalten' : 'Bitte Benutzer wählen');
   document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('pin-screen').classList.add('hidden');
+  document.getElementById('force-pw-screen').classList.add('hidden');
+  var u = document.getElementById('lg-username');
+  var p = document.getElementById('lg-password');
+  if (u) u.value = '';
+  if (p) p.value = '';
+  var err = document.getElementById('lg-error');
+  if (err) err.textContent = '';
+  document.getElementById('login-sub').textContent = 'Anmelden';
 }
 
-function selectUser(uid) {
-  var u = USERS.find(function(x){return x.id===uid;});
-  if (!u) return;
-  PIN_TARGET_USER = u;
-  // Admin currently logged in -> direct access to any profile, no PIN needed
-  if (CUR_USER && isAdmin(CUR_USER) && !isAdmin(u)) {
-    loginUser(u);
-    return;
-  }
-  if (u.pin) {
-    showPinScreen('login', u.name);
-  } else {
-    loginUser(u);
+async function doLogin() {
+  var username = document.getElementById('lg-username').value.trim();
+  var password = document.getElementById('lg-password').value;
+  var errEl = document.getElementById('lg-error');
+  errEl.textContent = '';
+  if (!username || !password) { errEl.textContent = 'Bitte Benutzername und Passwort eingeben'; return; }
+  if (!sb) { errEl.textContent = 'Verbindung nicht verfügbar'; return; }
+
+  showLoading('Anmelden…');
+  try {
+    // Benutzername -> echte E-Mail nachschlagen
+    var { data: email, error: lookupErr } = await sb.rpc('get_email_for_username', { p_username: username });
+    if (lookupErr || !email) {
+      hideLoading();
+      errEl.textContent = '❌ Benutzername oder Passwort falsch';
+      return;
+    }
+    var { data, error } = await sb.auth.signInWithPassword({ email: email, password: password });
+    if (error) {
+      hideLoading();
+      errEl.textContent = '❌ Benutzername oder Passwort falsch';
+      return;
+    }
+    await onAuthSuccess(data.user);
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = '❌ ' + e.message;
   }
 }
 
-function showPinScreen(mode, name) {
-  PIN_MODE = mode; PIN_BUFFER = '';
-  updatePinDots();
-  document.getElementById('pin-screen-title').textContent =
-    mode==='set' ? '🔒 PIN festlegen' : mode==='change' ? '🔒 Neuen PIN eingeben' : '🔒 PIN für ' + name;
-  document.getElementById('pin-screen-sub').textContent =
-    mode==='set'||mode==='change' ? '4-stelligen PIN eingeben' : 'Bitte PIN eingeben';
-  document.getElementById('pin-error').textContent = '';
+function showForcePasswordScreen() {
   document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('pin-screen').classList.remove('hidden');
+  document.getElementById('force-pw-screen').classList.remove('hidden');
+  document.getElementById('fpw-new').value = '';
+  document.getElementById('fpw-new2').value = '';
+  document.getElementById('fpw-error').textContent = '';
 }
 
-function pinKey(d) {
-  if (PIN_BUFFER.length >= 4) return;
-  PIN_BUFFER += d;
-  updatePinDots();
-  if (PIN_BUFFER.length === 4) {
-    setTimeout(function() { checkPin(); }, 150);
+async function doForcePasswordChange() {
+  var pw = document.getElementById('fpw-new').value;
+  var pw2 = document.getElementById('fpw-new2').value;
+  var errEl = document.getElementById('fpw-error');
+  if (!pw || pw.length < 6) { errEl.textContent = 'Passwort muss mind. 6 Zeichen haben'; return; }
+  if (pw !== pw2) { errEl.textContent = 'Passwörter stimmen nicht überein'; return; }
+  showLoading('Passwort wird gespeichert…');
+  try {
+    var { error } = await sb.auth.updateUser({ password: pw });
+    if (error) { hideLoading(); errEl.textContent = '❌ ' + error.message; return; }
+    await sb.from('profiles').update({ must_change_pw: false }).eq('id', SB_USER.id);
+    var me = USERS.find(function(x){ return x.id === SB_USER.id; });
+    if (me) me.must_change_pw = false;
+    document.getElementById('force-pw-screen').classList.add('hidden');
+    hideLoading();
+    toast('✅ Passwort geändert');
+    finishLogin(me || CUR_USER);
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = '❌ ' + e.message;
   }
-}
-function pinDel() { PIN_BUFFER = PIN_BUFFER.slice(0,-1); updatePinDots(); }
-function updatePinDots() {
-  for (var i=0;i<4;i++) {
-    var dot = document.getElementById('pd'+i);
-    if (dot) dot.classList.toggle('filled', i < PIN_BUFFER.length);
-  }
-}
-function checkPin() {
-  if (PIN_MODE === 'login') {
-    if (PIN_BUFFER === PIN_TARGET_USER.pin) {
-      loginUser(PIN_TARGET_USER);
-    } else {
-      document.getElementById('pin-error').textContent = '❌ Falscher PIN';
-      PIN_BUFFER = ''; updatePinDots();
-    }
-  } else if (PIN_MODE === 'set' || PIN_MODE === 'change') {
-    // Store temporarily and ask to confirm
-    PIN_TARGET_USER._newPin = PIN_BUFFER;
-    PIN_BUFFER = ''; updatePinDots();
-    document.getElementById('pin-screen-title').textContent = '🔒 PIN bestätigen';
-    document.getElementById('pin-screen-sub').textContent = 'PIN erneut eingeben';
-    PIN_MODE = 'confirm';
-  } else if (PIN_MODE === 'confirm') {
-    if (PIN_BUFFER === PIN_TARGET_USER._newPin) {
-      PIN_TARGET_USER.pin = PIN_BUFFER;
-      delete PIN_TARGET_USER._newPin;
-      saveUsers(); backToLogin();
-      toast('✅ PIN gespeichert!');
-    } else {
-      document.getElementById('pin-error').textContent = '❌ PINs stimmen nicht überein';
-      PIN_BUFFER = ''; updatePinDots();
-      PIN_MODE = PIN_TARGET_USER.pin ? 'change' : 'set';
-      document.getElementById('pin-screen-title').textContent = '🔒 PIN nochmal eingeben';
-    }
-  }
-}
-
-function backToLogin() {
-  document.getElementById('pin-screen').classList.add('hidden');
-  document.getElementById('login-screen').classList.remove('hidden');
 }
 
 function loginUser(u) {
+  finishLogin(u);
+}
+
+function finishLogin(u) {
   CUR_USER = u;
   document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('pin-screen').classList.add('hidden');
+  document.getElementById('force-pw-screen').classList.add('hidden');
   loadDB();
-  // Update topbar
   document.getElementById('acc-name').textContent = u.name;
   var avImg = document.getElementById('acc-av-img');
   var avEmoji = document.getElementById('acc-av-emoji');
   if (u.photo) { avImg.src=u.photo; avImg.style.display='block'; avEmoji.style.display='none'; }
   else { avImg.style.display='none'; avEmoji.style.display='block'; avEmoji.textContent=u.name.charAt(0).toUpperCase(); }
   updateNavForUser();
-  // Check for unread messages
   setTimeout(checkUnreadMessages, 400);
   if (isAdmin(u)) {
     goPage('home', document.querySelector('.ni'));
@@ -2564,36 +2536,52 @@ function loadUserPhoto(input) {
 }
 
 function openNewUserSheet() {
-  var wrap = document.getElementById('nu-admin-wrap');
-  if (wrap) wrap.style.display = (CUR_USER && isAdmin(CUR_USER)) ? 'block' : 'none';
-  var cb = document.getElementById('nu-is-admin');
-  if (cb) cb.checked = false;
+  if (!CUR_USER || !isAdmin(CUR_USER)) { toast('Nur Admins können Benutzer anlegen'); return; }
+  document.getElementById('nu-username').value = '';
+  document.getElementById('nu-name').value = '';
+  document.getElementById('nu-email').value = '';
+  document.getElementById('nu-temppw').value = '';
+  document.getElementById('nu-error').textContent = '';
   openSheet('sh-new-user');
 }
 
-function saveNewUser() {
-  var name = document.getElementById('nu-name').value.trim();
-  if (!name) { alert('Bitte Name eingeben'); return; }
-  var pin = document.getElementById('nu-pin').value;
-  var pin2 = document.getElementById('nu-pin2').value;
-  if (pin && pin !== pin2) { alert('PINs stimmen nicht überein'); return; }
-  if (pin && !/^\d{4}$/.test(pin)) { alert('PIN muss genau 4 Ziffern sein'); return; }
-  var img = document.getElementById('nu-photo-img');
-  var admin = USERS.find(function(u){ return u.role==='admin'; });
-  // First user ever becomes admin automatically
-  var role = (!admin) ? 'admin' : 'user';
-  var isAdminCheck = document.getElementById('nu-is-admin');
-  if (isAdminCheck && isAdminCheck.checked && CUR_USER && isAdmin(CUR_USER)) role = 'admin';
-  var u = { id: Date.now().toString(), name: name, pin: pin||'', photo: (img.style.display!=='none'?img.src:''), role: role };
-  USERS.push(u); saveUsers();
-  cs('sh-new-user');
-  // Clear form
-  document.getElementById('nu-name').value='';
-  document.getElementById('nu-pin').value='';
-  document.getElementById('nu-pin2').value='';
-  img.style.display='none'; img.src='';
-  document.getElementById('nu-photo-emoji').style.display='block';
-  renderLoginScreen();
+async function saveNewUser() {
+  var username = document.getElementById('nu-username').value.trim();
+  var name = document.getElementById('nu-name').value.trim() || username;
+  var email = document.getElementById('nu-email').value.trim();
+  var temppw = document.getElementById('nu-temppw').value;
+  var errEl = document.getElementById('nu-error');
+  errEl.textContent = '';
+
+  if (!username) { errEl.textContent = 'Bitte Benutzername eingeben'; return; }
+  if (!/^[a-zA-Z0-9_.]{3,30}$/.test(username)) { errEl.textContent = 'Benutzername: 3-30 Zeichen, nur Buchstaben/Zahlen/_/.'; return; }
+  if (!email) { errEl.textContent = 'Bitte E-Mail eingeben'; return; }
+  if (!temppw || temppw.length < 6) { errEl.textContent = 'Passwort muss mind. 6 Zeichen haben'; return; }
+
+  showLoading('Benutzer wird angelegt…');
+  try {
+    var { data: { session } } = await sb.auth.getSession();
+    var resp = await fetch(SUPABASE_URL + '/functions/v1/admin-create-user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token
+      },
+      body: JSON.stringify({ username: username, email: email, password: temppw, fullName: name })
+    });
+    var result = await resp.json();
+    hideLoading();
+    if (!resp.ok || result.error) {
+      errEl.textContent = '❌ ' + (result.error || 'Unbekannter Fehler');
+      return;
+    }
+    cs('sh-new-user');
+    toast('✅ Benutzer "' + username + '" angelegt');
+    if (isAdmin(CUR_USER)) renderAdminUserList();
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = '❌ ' + e.message;
+  }
 }
 
 function openUserSettings() {
@@ -2607,16 +2595,124 @@ function openUserSettings() {
     '<div style="text-align:center;margin-bottom:20px">'+
       '<div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;margin:0 auto 10px;overflow:hidden;position:relative">'+av+'</div>'+
       '<div style="font-size:18px;font-weight:600">'+CUR_USER.name+'</div>'+
+      '<div style="color:var(--mu);font-size:13px">@'+(CUR_USER.username||'')+'</div>'+
       adminBadge+
-      '<div style="color:var(--mu);font-size:13px">'+(CUR_USER.pin?'PIN geschützt':'Kein PIN')+'</div>'+
     '</div>'+
-    '<div class="hrow" onclick="changePinFlow()"><div class="hi">🔒</div><div class="hinfo"><div class="ht">'+(CUR_USER.pin?'PIN ändern':'PIN einrichten')+'</div><div class="hs2">'+(CUR_USER.pin?'Neuen PIN festlegen':'Account mit PIN sichern')+'</div></div></div>'+
-    (CUR_USER.pin?'<div class="hrow" onclick="removePinConfirm()"><div class="hi">🔓</div><div class="hinfo"><div class="ht">PIN entfernen</div><div class="hs2">Account ohne PIN nutzen</div></div></div>':'')+
-    (isAdmin(CUR_USER)?'<div class="hrow" onclick="adminCreateUser()"><div class="hi">➕</div><div class="hinfo"><div class="ht">Neues Profil anlegen</div><div class="hs2">Als Admin neuen Benutzer erstellen</div></div></div>':'')+ 
+    '<div class="hrow" onclick="openChangeEmailSheet()"><div class="hi">📧</div><div class="hinfo"><div class="ht">E-Mail</div><div class="hs2">'+(CUR_USER.email?CUR_USER.email:'Keine hinterlegt (optional)')+'</div></div></div>'+
+    '<div class="hrow" onclick="openChangePasswordSheet()"><div class="hi">🔑</div><div class="hinfo"><div class="ht">Passwort ändern</div><div class="hs2">Eigenes Passwort aktualisieren</div></div></div>'+
+    (isAdmin(CUR_USER)?'<div class="hrow" onclick="adminCreateUser()"><div class="hi">➕</div><div class="hinfo"><div class="ht">Neuen Benutzer anlegen</div><div class="hs2">Benutzername, E-Mail & vorl. Passwort vergeben</div></div></div>':'')+
+    '<div class="hrow" onclick="exportOwnBackup()"><div class="hi">💾</div><div class="hinfo"><div class="ht">Datensicherung</div><div class="hs2">Eigene Daten als Datei exportieren</div></div></div>'+
     '<div class="dvd"></div>'+
-    '<div class="hrow" onclick="logoutUser()"><div class="hi">🚪</div><div class="hinfo"><div class="ht">Benutzer wechseln</div><div class="hs2">Zur Benutzerauswahl zurück</div></div></div>'+
-    '<div class="hrow" onclick="deleteUserConfirm()"><div class="hi">🗑️</div><div class="hinfo"><div class="ht" style="color:var(--red)">Profil löschen</div><div class="hs2">Account und alle Daten entfernen</div></div></div>';
+    '<div class="hrow" onclick="logoutUser()"><div class="hi">🚪</div><div class="hinfo"><div class="ht">Abmelden</div><div class="hs2">Zurück zum Login</div></div></div>'+
+    (!isAdmin(CUR_USER)?'<div class="hrow" onclick="deleteUserConfirm()"><div class="hi">🗑️</div><div class="hinfo"><div class="ht" style="color:var(--red)">Profil löschen</div><div class="hs2">Account und alle Daten entfernen</div></div></div>':'');
   openSheet('sh-user-settings');
+}
+
+function openChangeEmailSheet() {
+  document.getElementById('ce-email').value = CUR_USER.email || '';
+  document.getElementById('ce-error').textContent = '';
+  cs('sh-user-settings');
+  openSheet('sh-change-email');
+}
+
+async function saveOwnEmail() {
+  var email = document.getElementById('ce-email').value.trim();
+  var errEl = document.getElementById('ce-error');
+  errEl.textContent = '';
+  showLoading('Speichern…');
+  try {
+    if (email) {
+      var { error: authErr } = await sb.auth.updateUser({ email: email });
+      if (authErr) { hideLoading(); errEl.textContent = '❌ ' + authErr.message; return; }
+    }
+    await sb.from('profiles').update({ email: email }).eq('id', CUR_USER.id);
+    CUR_USER.email = email;
+    hideLoading();
+    cs('sh-change-email');
+    toast('✅ E-Mail gespeichert');
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = '❌ ' + e.message;
+  }
+}
+
+function openChangePasswordSheet() {
+  document.getElementById('cp-new').value = '';
+  document.getElementById('cp-new2').value = '';
+  document.getElementById('cp-error').textContent = '';
+  cs('sh-user-settings');
+  openSheet('sh-change-password');
+}
+
+async function saveOwnPassword() {
+  var pw = document.getElementById('cp-new').value;
+  var pw2 = document.getElementById('cp-new2').value;
+  var errEl = document.getElementById('cp-error');
+  if (!pw || pw.length < 6) { errEl.textContent = 'Passwort muss mind. 6 Zeichen haben'; return; }
+  if (pw !== pw2) { errEl.textContent = 'Passwörter stimmen nicht überein'; return; }
+  showLoading('Passwort wird geändert…');
+  try {
+    var { error } = await sb.auth.updateUser({ password: pw });
+    if (error) { hideLoading(); errEl.textContent = '❌ ' + error.message; return; }
+    hideLoading();
+    cs('sh-change-password');
+    toast('✅ Passwort geändert');
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = '❌ ' + e.message;
+  }
+}
+
+var ADMIN_RESET_TARGET = null;
+function openAdminResetPassword(uid) {
+  var target = USERS.find(function(x){ return x.id === uid; });
+  if (!target) return;
+  ADMIN_RESET_TARGET = target;
+  document.getElementById('arp-target-name').textContent = 'Für Benutzer: ' + target.name + ' (@' + (target.username||'') + ')';
+  document.getElementById('arp-new').value = '';
+  document.getElementById('arp-error').textContent = '';
+  openSheet('sh-admin-reset-pw');
+}
+
+async function saveAdminResetPassword() {
+  var pw = document.getElementById('arp-new').value;
+  var errEl = document.getElementById('arp-error');
+  if (!pw || pw.length < 6) { errEl.textContent = 'Passwort muss mind. 6 Zeichen haben'; return; }
+  if (!ADMIN_RESET_TARGET) return;
+  showLoading('Passwort wird zurückgesetzt…');
+  try {
+    var { data: { session } } = await sb.auth.getSession();
+    var resp = await fetch(SUPABASE_URL + '/functions/v1/admin-reset-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token
+      },
+      body: JSON.stringify({ targetUserId: ADMIN_RESET_TARGET.id, newPassword: pw })
+    });
+    var result = await resp.json();
+    hideLoading();
+    if (!resp.ok || result.error) {
+      errEl.textContent = '❌ ' + (result.error || 'Unbekannter Fehler');
+      return;
+    }
+    cs('sh-admin-reset-pw');
+    toast('✅ Passwort für ' + ADMIN_RESET_TARGET.name + ' zurückgesetzt');
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = '❌ ' + e.message;
+  }
+}
+
+function exportOwnBackup() {
+  cs('sh-user-settings');
+  var backup = { user: { name: CUR_USER.name, username: CUR_USER.username, email: CUR_USER.email||'' }, data: DB, exportedAt: new Date().toISOString() };
+  var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pigeondata_backup_' + (CUR_USER.username||'user') + '_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  toast('💾 Datensicherung erstellt');
 }
 
 function adminCreateUser() {
@@ -2624,62 +2720,37 @@ function adminCreateUser() {
   openNewUserSheet();
 }
 
-function changePinFlow() {
+async function logoutUser() {
   cs('sh-user-settings');
-  PIN_TARGET_USER = CUR_USER;
-  showPinScreen('change', CUR_USER.name);
-}
-function removePinConfirm() {
-  if (!confirm('PIN wirklich entfernen?')) return;
-  CUR_USER.pin = ''; saveUsers(); cs('sh-user-settings'); toast('🔓 PIN entfernt');
-  document.getElementById('acc-bar') && (document.getElementById('acc-bar').querySelector && null);
-}
-function logoutUser() {
-  var wasUser = CUR_USER;
-  cs('sh-user-settings');
+  if (sb) await sb.auth.signOut();
+  CUR_USER = null; SB_USER = null;
   DB = {pigeons:[],logs:[],notes:[]};
-  // Non-admin: show only own profile on switch screen
-  if (wasUser && !isAdmin(wasUser)) {
-    CUR_USER = null;
-    renderSingleUserScreen(wasUser);
-  } else {
-    CUR_USER = null;
-    renderLoginScreen();
-  }
+  renderLoginScreen();
 }
 
-function renderSingleUserScreen(u) {
-  // Non-admin sees only their own tile when switching
-  var grid = document.getElementById('user-grid');
-  var av = u.photo
-    ? '<img src="'+u.photo+'">'
-    : '<span>'+u.name.charAt(0).toUpperCase()+'</span>';
-  grid.innerHTML = '<div class="user-tile" onclick="selectUser(&quot;'+u.id+'&quot;)">'+
-    '<div class="ut-av">'+av+'</div>'+
-    '<div class="ut-name">'+u.name+'</div>'+
-    '<div class="ut-lock">'+(u.pin?'🔒 PIN':'🔓 Offen')+'</div>'+
-  '</div>';
-  var sub = document.getElementById('login-sub');
-  if (sub) sub.textContent = 'Willkommen zurück, '+u.name+'!';
-  document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('pin-screen').classList.add('hidden');
-}
 function deleteUserConfirm() {
-  if (!confirm('Profil und ALLE Daten von '+CUR_USER.name+' wirklich löschen?')) return;
-  localStorage.removeItem('pd_db_'+CUR_USER.id);
-  USERS = USERS.filter(function(u){return u.id!==CUR_USER.id;});
-  saveUsers(); CUR_USER = null; DB = {pigeons:[],logs:[],notes:[]};
-  cs('sh-user-settings'); renderLoginScreen(); toast('Profil gelöscht');
+  if (!confirm('Profil und ALLE Daten von '+CUR_USER.name+' wirklich löschen? Bitte wende dich an deinen Administrator, falls du dies nicht selbst kannst.')) return;
+  toast('Bitte den Administrator bitten, dein Profil zu löschen.');
 }
 
-function adminDeleteUser(uid) {
+async function adminDeleteUser(uid) {
   if (!CUR_USER || !isAdmin(CUR_USER)) return;
   var target = USERS.find(function(u){return u.id===uid;});
   if (!target) return;
   if (!confirm('Profil "'+target.name+'" und alle Daten wirklich löschen?')) return;
-  localStorage.removeItem('pd_db_'+target.id);
+  showLoading('Wird gelöscht…');
+  try {
+    if (sb) {
+      await sb.from('pigeons').delete().eq('owner_id', uid);
+      await sb.from('logs').delete().eq('user_id', uid);
+      await sb.from('notes').delete().eq('user_id', uid);
+      await sb.from('profiles').delete().eq('id', uid);
+    }
+  } catch(e) { console.warn('adminDeleteUser:', e.message); }
   USERS = USERS.filter(function(u){return u.id!==uid;});
-  saveUsers(); renderLoginScreen(); toast('Profil "'+target.name+'" gelöscht');
+  hideLoading();
+  if (typeof renderAdminUserList === 'function') renderAdminUserList();
+  toast('Profil "'+target.name+'" gelöscht');
 }
 
 // Override clearAll to scope to user
@@ -2715,7 +2786,7 @@ function clearAll() {
 
 // ── Supabase Client ─────────────────────────────────────────
 const SUPABASE_URL  = 'https://vuenlryuxivpercujjqr.supabase.co';
-const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1ZW5scnl1eGl2cGVyY3VqanFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NjIxMzAsImV4cCI6MjA5NjMzODEzMH0.kqUix_cR77-fZDn1iOtaciUw7wWX0s4Gdl74c_zK68Y';
+const SUPABASE_KEY  = 'sb_publishable_7xtZ-okNnAevAaYfce-Cqw_wSuhkfcR';
 // Supabase Client - das UMD-Bundle definiert window.supabase
 var sb = null;
 try {
@@ -2763,11 +2834,13 @@ async function loadUsers() {
     // Mappe Supabase-Felder auf App-Format
     USERS = (data || []).map(row => ({
       id:    row.id,
-      name:  row.full_name || row.email || '?',
+      name:  row.full_name || row.username || row.email || '?',
+      username: row.username || '',
       pin:   row.pin  || '',
       photo: row.avatar_url || row.photo || '',
       role:  row.role || 'user',
-      email: row.email || ''
+      email: row.email || '',
+      must_change_pw: !!row.must_change_pw
     }));
   } catch (e) {
     console.warn('loadUsers Fehler:', e.message);
@@ -3033,75 +3106,11 @@ async function markRead(msgId) {
 // LOGIN / LOGOUT mit Supabase Auth
 // ============================================================
 
-// Login-Screen um Email+Passwort-Felder erweitern
-function injectAuthUI() {
-  const screen = document.getElementById('login-screen');
-  if (!screen || document.getElementById('sb-auth-form')) return;
-
-  const authDiv = document.createElement('div');
-  authDiv.id = 'sb-auth-form';
-  authDiv.style.cssText = 'width:100%;max-width:380px;margin-top:20px';
-  authDiv.innerHTML = `
-    <div style="color:var(--mu);font-size:12px;text-align:center;margin-bottom:12px">
-      ── Mit Konto anmelden ──
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <input id="sb-email" class="fi" type="email" placeholder="E-Mail" autocomplete="email">
-      <input id="sb-pass"  class="fi" type="password" placeholder="Passwort" autocomplete="current-password">
-      <button class="btn1" onclick="sbSignIn()" style="margin-top:0">Anmelden</button>
-      <button class="btn2" onclick="sbSignUp()" style="margin-top:0">Neues Konto erstellen</button>
-      <div id="sb-auth-err" style="color:var(--red);font-size:13px;text-align:center;min-height:20px"></div>
-    </div>
-  `;
-  screen.appendChild(authDiv);
-}
-
-async function sbSignIn() {
-  const email = document.getElementById('sb-email')?.value.trim();
-  const pass  = document.getElementById('sb-pass')?.value;
-  const errEl = document.getElementById('sb-auth-err');
-  if (!email || !pass) { if(errEl) errEl.textContent = 'Bitte E-Mail und Passwort eingeben'; return; }
-  if(errEl) errEl.textContent = '';
-  showLoading('Anmelden…');
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) {
-    hideLoading();
-    if(errEl) errEl.textContent = '❌ ' + error.message;
-    return;
-  }
-  await onAuthSuccess(data.user);
-}
-
-async function sbSignUp() {
-  const email = document.getElementById('sb-email')?.value.trim();
-  const pass  = document.getElementById('sb-pass')?.value;
-  const errEl = document.getElementById('sb-auth-err');
-  if (!email || !pass) { if(errEl) errEl.textContent = 'Bitte E-Mail und Passwort eingeben'; return; }
-  if (pass.length < 6) { if(errEl) errEl.textContent = 'Passwort mind. 6 Zeichen'; return; }
-  if(errEl) errEl.textContent = '';
-  showLoading('Konto wird erstellt…');
-  const { data, error } = await sb.auth.signUp({ email, password: pass });
-  if (error) {
-    hideLoading();
-    if(errEl) errEl.textContent = '❌ ' + error.message;
-    return;
-  }
-  if (data.user) {
-    // Profil anlegen
-    await sb.from('profiles').upsert({
-      id:        data.user.id,
-      email:     email,
-      full_name: email.split('@')[0],
-      role:      USERS.length === 0 ? 'admin' : 'user',
-      pin:       '',
-      avatar_url:''
-    }, { onConflict: 'id' });
-    await onAuthSuccess(data.user);
-  } else {
-    hideLoading();
-    if(errEl) errEl.textContent = '📧 Bestätigungs-E-Mail wurde gesendet. Bitte bestätigen.';
-  }
-}
+// Login läuft jetzt über das Benutzername/Passwort-Formular direkt im
+// login-screen (siehe doLogin() weiter oben). Kein zusätzliches Auth-UI
+// nötig, daher injectAuthUI() ist nur noch ein no-op (für Kompatibilität
+// mit sbInit()).
+function injectAuthUI() { /* no-op: Login-Formular ist fest im HTML */ }
 
 async function onAuthSuccess(user) {
   SB_USER = user;
@@ -3110,36 +3119,16 @@ async function onAuthSuccess(user) {
   // Finde das Profil dieses Users
   let profile = USERS.find(u => u.id === user.id);
   if (!profile) {
-    // Profil neu anlegen falls noch nicht vorhanden
-    profile = { id: user.id, name: user.email.split('@')[0], pin:'', photo:'', role: USERS.length===0?'admin':'user', email: user.email };
+    // Profil neu anlegen falls noch nicht vorhanden (Fallback)
+    profile = { id: user.id, name: user.email.split('@')[0], username: user.email.split('@')[0], pin:'', photo:'', role: USERS.length===0?'admin':'user', email: user.email, must_change_pw: false };
     USERS.push(profile);
   }
   hideLoading();
-  // Hat das Profil einen PIN? → PIN-Screen zeigen
-  if (profile.pin) {
-    CUR_USER = null; // noch nicht eingeloggt
-    PIN_TARGET_USER = profile;
-    showPinScreen('login', profile.name);
+  if (profile.must_change_pw) {
+    CUR_USER = profile;
+    showForcePasswordScreen();
   } else {
     loginUser(profile);
-  }
-}
-
-// Logout → Supabase signOut
-const _origLogoutUser = typeof logoutUser !== 'undefined' ? logoutUser : null;
-async function logoutUser() {
-  const wasUser = CUR_USER;
-  cs('sh-user-settings');
-  await sb.auth.signOut();
-  SB_USER = null;
-  DB = {pigeons:[],logs:[],notes:[]};
-  _msgsCache = null;
-  if (wasUser && !isAdmin(wasUser)) {
-    CUR_USER = null;
-    renderSingleUserScreen(wasUser);
-  } else {
-    CUR_USER = null;
-    renderLoginScreen();
   }
 }
 
@@ -3183,25 +3172,7 @@ async function deleteNote(id) {
   }
 }
 
-// User löschen (Admin)
-const _origAdminDeleteUser = adminDeleteUser;
-async function adminDeleteUser(uid) {
-  if (!CUR_USER || !isAdmin(CUR_USER)) return;
-  const target = USERS.find(u => u.id === uid);
-  if (!target) return;
-  if (!confirm(`Profil "${target.name}" und alle Daten wirklich löschen?`)) return;
-  // Supabase: Profil löschen (Cascades löschen pigeons/logs/notes falls FK gesetzt)
-  if (SB_USER) {
-    await sb.from('pigeons').delete().eq('owner_id', uid);
-    await sb.from('logs').delete().eq('user_id', uid);
-    await sb.from('notes').delete().eq('user_id', uid);
-    await sb.from('profiles').delete().eq('id', uid);
-  }
-  localStorage.removeItem('pd_db_' + uid);
-  USERS = USERS.filter(u => u.id !== uid);
-  renderLoginScreen();
-  toast(`Profil "${target.name}" gelöscht`);
-}
+// adminDeleteUser ist bereits weiter oben definiert (siehe MULTI-USER SYSTEM)
 
 // ============================================================
 // INIT – Supabase Auth Session prüfen
