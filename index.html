@@ -564,7 +564,11 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <div class="fg"><label class="fl">Geschlecht</label>
       <select class="fi" id="pf-sex"><option value="">Unbekannt</option><option>♂ Täuberich</option><option>♀ Täubin</option></select>
     </div>
-    <div class="fg"><label class="fl">Geburtsjahr</label><input class="fi" id="pf-year" placeholder="2024" type="number"></div>
+    <div class="fg"><label class="fl">Geburtsjahr</label>
+      <select class="fi" id="pf-year">
+        <option value="Unbekannt" selected>Unbekannt</option>
+      </select>
+    </div>
   </div>
   <div class="fg"><label class="fl">Farbe / Zeichnung</label><input class="fi" id="pf-color" placeholder="blau-geschimmel" type="text"></div>
   <div class="fg"><label class="fl">Unterbringung</label>
@@ -585,30 +589,34 @@ select.fi option{background:var(--sur);color:var(--tx)}
   </div>
   <div class="fg"><label class="fl">Eigener Zustand (Freitext)</label><input class="fi" id="pf-health2" placeholder="z.B. post-op, Quarantäne..." type="text"></div>
   <div class="fg"><label class="fl">Symptome</label>
-    <div class="chips" id="pf-symp">
-      <div class="chip" onclick="tc(this)">Durchfall</div><div class="chip" onclick="tc(this)">Atemnot</div>
-      <div class="chip" onclick="tc(this)">Gefiederproblem</div><div class="chip" onclick="tc(this)">Lahmen</div>
-      <div class="chip" onclick="tc(this)">Erbrechen</div><div class="chip" onclick="tc(this)">Lethargie</div>
-      <div class="chip" onclick="tc(this)">Fressunlust</div><div class="chip" onclick="tc(this)">Augenausfluss</div>
-    </div>
+    <select class="fi" id="pf-symp">
+      <option value="">— wählen —</option>
+      <option>Durchfall</option><option>Atemnot</option>
+      <option>Gefiederproblem</option><option>Lahmen</option>
+      <option>Erbrechen</option><option>Lethargie</option>
+      <option>Fressunlust</option><option>Augenausfluss</option>
+    </select>
   </div>
   <div class="fg"><label class="fl">Eigene Symptome</label><input class="fi" id="pf-symp2" placeholder="z.B. Nasenausfluss..." type="text"></div>
   <div class="fg"><label class="fl">Krankheiten / Parasiten</label>
-    <div class="chips" id="pf-dis">
-      <div class="chip" onclick="tc(this)">Kokzidien</div><div class="chip" onclick="tc(this)">Trichomonden</div>
-      <div class="chip" onclick="tc(this)">Salmonellen</div><div class="chip" onclick="tc(this)">Tuberkulose</div>
-      <div class="chip" onclick="tc(this)">Hefen</div><div class="chip" onclick="tc(this)">Würmer</div>
-      <div class="chip" onclick="tc(this)">Anflugtrauma</div><div class="chip" onclick="tc(this)">Federlinge</div>
-    </div>
+    <select class="fi" id="pf-dis">
+      <option value="">— wählen —</option>
+      <option>Kokzidien</option><option>Trichomonden</option>
+      <option>Salmonellen</option><option>Tuberkulose</option>
+      <option>Hefen</option><option>Würmer</option>
+      <option>Anflugtrauma</option><option>Federlinge</option>
+    </select>
   </div>
   <div class="fg"><label class="fl">Eigene Krankheit / Parasit</label><input class="fi" id="pf-dis2" placeholder="z.B. Paramyxovirus..." type="text"></div>
 
   <div class="dvd"></div>
   <div class="stit2">📍 Fundort & Verlauf</div>
   <div class="fg"><label class="fl">📍 Ort der Sicherung</label><input class="fi" id="pf-found" placeholder="z.B. Straße, Stadt..." type="text"></div>
+  <div class="fg"><label class="fl">🏙️ Stadt *</label><input class="fi" id="pf-found-city" placeholder="z.B. Stuttgart" type="text"></div>
   <div class="fg"><label class="fl">📅 Datum der Aufnahme</label><input class="fi" id="pf-intake" type="date"></div>
   <div class="fg"><label class="fl">🕊️ Datum Auswilderung</label><input class="fi" id="pf-release" type="date"></div>
   <div class="fg"><label class="fl">📍 Ort der Auswilderung</label><input class="fi" id="pf-release2" placeholder="z.B. Park, Wald..." type="text"></div>
+  <div class="fg"><label class="fl">🏙️ Stadt</label><input class="fi" id="pf-release2-city" placeholder="z.B. Stuttgart" type="text"></div>
   <div class="fg"><label class="fl">💉 Datum Euthanasie</label><input class="fi" id="pf-euth" type="date"></div>
   <div class="fg"><label class="fl">💉 Grund der Euthanasie</label><input class="fi" id="pf-euth2" placeholder="z.B. schwere Verletzung..." type="text"></div>
   <div class="fg"><label class="fl">🖤 Verstorben am</label><input class="fi" id="pf-death" type="date"></div>
@@ -639,12 +647,13 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <!-- FUETTERN -->
   <div id="sec-fuettern" style="display:none">
     <div class="fg"><label class="fl">Futter</label>
-      <div class="chips" id="lf-food">
-        <div class="chip on" onclick="tc(this)">Zuchtmischung</div><div class="chip" onclick="tc(this)">Reisemischung</div>
-        <div class="chip" onclick="tc(this)">Mais</div><div class="chip" onclick="tc(this)">Erbsen</div>
-        <div class="chip" onclick="tc(this)">Gerste</div><div class="chip" onclick="tc(this)">Weizen</div>
-        <div class="chip" onclick="tc(this)">Hanf</div><div class="chip" onclick="tc(this)">Pellets</div><div class="chip" onclick="tc(this)">Breimischung</div>
-      </div>
+      <select class="fi" id="lf-food">
+        <option value="">— wählen —</option>
+        <option>Zuchtmischung</option><option>Reisemischung</option>
+        <option>Mais</option><option>Erbsen</option>
+        <option>Gerste</option><option>Weizen</option>
+        <option>Hanf</option><option>Pellets</option><option>Breimischung</option>
+      </select>
     </div>
     <div class="fg"><label class="fl">Eigenes Futter</label><input class="fi" id="lf-food2" placeholder="z.B. Hirse, Sonnenblumenkerne..." type="text"></div>
     <div class="frow">
@@ -652,11 +661,18 @@ select.fi option{background:var(--sur);color:var(--tx)}
       <div class="fg"><label class="fl">Einheit</label><select class="fi" id="lf-unit"><option>Gramm</option><option>ml</option><option>EL</option></select></div>
     </div>
     <div class="fg"><label class="fl">Supplement</label>
-      <div class="chips" id="lf-supp">
-        <div class="chip" onclick="tc(this)">Vitamine</div><div class="chip" onclick="tc(this)">Mineralien</div>
-        <div class="chip" onclick="tc(this)">Elektrolyte</div><div class="chip" onclick="tc(this)">Probiotika</div>
-        <div class="chip" onclick="tc(this)">Oregano-Öl</div><div class="chip" onclick="tc(this)">Knoblauch</div><div class="chip" onclick="tc(this)">NEKTON-B-Komplex</div><div class="chip" onclick="tc(this)">Tollyamin-forte</div><div class="chip" onclick="tc(this)">Entrobac</div>
-      </div>
+      <select class="fi" id="lf-supp">
+        <option value="">— wählen —</option>
+        <option>Entrobac</option>
+        <option>Korvimin</option>
+        <option>Nekton B</option>
+        <option>Nekton Calcium Pulver</option>
+        <option>Nekton Tonic K</option>
+        <option>Phyto Nephro</option>
+        <option>Prime</option>
+        <option>Tollyamin forte</option>
+        <option>Vitamin ADEC</option>
+      </select>
     </div>
     <div class="fg"><label class="fl">Eigenes Supplement</label><input class="fi" id="lf-supp2" placeholder="z.B. Apfelessig..." type="text"></div>
   </div>
@@ -683,7 +699,28 @@ select.fi option{background:var(--sur);color:var(--tx)}
 
   <!-- MEDIKATION -->
   <div id="sec-medikation" style="display:none">
-    <div class="fg"><label class="fl">💊 Medikament</label><input class="fi" id="lf-mname" placeholder="z.B. Ronidazol, Baytril..." type="text"></div>
+    <div class="fg"><label class="fl">💊 Medikament</label>
+      <select class="fi" id="lf-mname">
+        <option value="">— wählen —</option>
+        <option>Antiworm</option>
+        <option>Appercox Liquid</option>
+        <option>Appercox Tabletten</option>
+        <option>Bepanthen Augen &amp; Nasensalbe</option>
+        <option>Betaisodona Lösung</option>
+        <option>Corneregel Augensalbe</option>
+        <option>Euphrasia Augentropfen</option>
+        <option>Frubiase Calcium</option>
+        <option>Kolloidales Silberspray</option>
+        <option>Manuka Lind Salbe</option>
+        <option>Manuka Lind Spray</option>
+        <option>Nystaderm</option>
+        <option>Sab Simplex Suspension</option>
+        <option>Traumeel vet Salbe</option>
+        <option>Traumeel vet Tabletten</option>
+        <option>Tricho Tabs</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Eigenes Medikament</label><input class="fi" id="lf-mname2" placeholder="z.B. Ronidazol, Baytril..." type="text"></div>
     <div class="frow">
       <div class="fg"><label class="fl">Dosierung</label><input class="fi" id="lf-mdose" placeholder="10mg, 0.5ml" type="text"></div>
       <div class="fg"><label class="fl">Verabreichung</label>
@@ -814,6 +851,21 @@ function oc(e, id) { if (e.target.classList.contains('overlay')) cs(id); }
 // CHIPS
 // ============================================================
 function tc(el) { el.classList.toggle('on'); }
+// ============================================================
+// GEBURTSJAHR DROPDOWN
+// ============================================================
+function fillYearDropdown() {
+  var sel = document.getElementById('pf-year');
+  if (!sel || sel.dataset.filled) return;
+  var curYear = new Date().getFullYear();
+  for (var y = curYear; y >= curYear - 40; y--) {
+    var o = document.createElement('option');
+    o.value = String(y); o.textContent = String(y);
+    sel.appendChild(o);
+  }
+  sel.dataset.filled = '1';
+}
+
 function chips(id) {
   var el = document.getElementById(id);
   if (!el) return [];
@@ -830,7 +882,7 @@ function setChips(id, vals) {
 // ============================================================
 // PIGEON FORM
 // ============================================================
-var PIG_FIELDS = ['pf-name','pf-ring','pf-rasse','pf-year','pf-color','pf-housing','pf-housing2','pf-notes','pf-health2','pf-symp2','pf-dis2','pf-found','pf-intake','pf-release','pf-release2','pf-euth','pf-euth2','pf-death','pf-death2'];
+var PIG_FIELDS = ['pf-name','pf-ring','pf-rasse','pf-year','pf-color','pf-housing','pf-housing2','pf-notes','pf-health2','pf-symp2','pf-dis2','pf-found','pf-found-city','pf-intake','pf-release','pf-release2','pf-release2-city','pf-euth','pf-euth2','pf-death','pf-death2'];
 
 function loadPhoto(input) {
   var file = input.files[0]; if (!file) return;
@@ -864,6 +916,8 @@ function cancelPigeonForm() {
   PIG_FIELDS.forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('pf-sex').value = '';
   document.getElementById('pf-health').value = 'Gesund';
+  fillYearDropdown();
+  document.getElementById('pf-year').value = 'Unbekannt';
   document.getElementById('pf-photo').value = '';
   var img2 = document.getElementById('pf-photo-img');
   var em2 = document.getElementById('pf-photo-emoji');
@@ -871,12 +925,18 @@ function cancelPigeonForm() {
   if(img2){img2.style.display='none';img2.src='';}
   if(em2) em2.style.display='block';
   if(db2) db2.style.display='none';
-  setChips('pf-symp', []); setChips('pf-dis', []);
+  document.getElementById('pf-symp').value = '';
+  document.getElementById('pf-dis').value = '';
 }
 
 function savePigeon() {
   var name = document.getElementById('pf-name').value.trim();
   if (!name) { alert('Bitte Name eingeben'); return; }
+  var foundCity = document.getElementById('pf-found-city').value.trim();
+  if (!foundCity) { alert('Bitte Stadt (Ort der Sicherung) eingeben'); return; }
+  var release2 = document.getElementById('pf-release2').value.trim();
+  var release2City = document.getElementById('pf-release2-city').value.trim();
+  if (release2 && !release2City) { alert('Bitte Stadt (Ort der Auswilderung) eingeben'); return; }
   var editId = document.getElementById('pig-edit-id').value;
   var d = {
     name: name,
@@ -890,14 +950,16 @@ function savePigeon() {
     notes: document.getElementById('pf-notes').value.trim(),
     health: document.getElementById('pf-health').value || 'Gesund',
     health2: document.getElementById('pf-health2').value.trim(),
-    symptoms: chips('pf-symp'),
+    symptoms: (function(){ var v = document.getElementById('pf-symp').value; return v ? [v] : []; })(),
     symp2: document.getElementById('pf-symp2').value.trim(),
-    diseases: chips('pf-dis'),
+    diseases: (function(){ var v = document.getElementById('pf-dis').value; return v ? [v] : []; })(),
     dis2: document.getElementById('pf-dis2').value.trim(),
     found: document.getElementById('pf-found').value.trim(),
+    foundCity: document.getElementById('pf-found-city').value.trim(),
     intake: document.getElementById('pf-intake').value,
     release: document.getElementById('pf-release').value,
     release2: document.getElementById('pf-release2').value.trim(),
+    release2City: document.getElementById('pf-release2-city').value.trim(),
     euth: document.getElementById('pf-euth').value,
     euth2: document.getElementById('pf-euth2').value.trim(),
     death: document.getElementById('pf-death').value,
@@ -926,7 +988,8 @@ function editPigeon(id) {
   document.getElementById('pf-ring').value = p.ring || '';
   document.getElementById('pf-rasse').value = p.rasse || '';
   document.getElementById('pf-sex').value = p.sex || '';
-  document.getElementById('pf-year').value = p.year || '';
+  fillYearDropdown();
+  document.getElementById('pf-year').value = p.year || 'Unbekannt';
   document.getElementById('pf-color').value = p.color || '';
   document.getElementById('pf-housing').value = p.housing || '';
   document.getElementById('pf-housing2').value = p.housing2 || '';
@@ -936,9 +999,11 @@ function editPigeon(id) {
   document.getElementById('pf-symp2').value = p.symp2 || '';
   document.getElementById('pf-dis2').value = p.dis2 || '';
   document.getElementById('pf-found').value = p.found || '';
+  document.getElementById('pf-found-city').value = p.foundCity || '';
   document.getElementById('pf-intake').value = p.intake || '';
   document.getElementById('pf-release').value = p.release || '';
   document.getElementById('pf-release2').value = p.release2 || '';
+  document.getElementById('pf-release2-city').value = p.release2City || '';
   document.getElementById('pf-euth').value = p.euth || '';
   document.getElementById('pf-euth2').value = p.euth2 || '';
   document.getElementById('pf-death').value = p.death || '';
@@ -951,8 +1016,8 @@ function editPigeon(id) {
   var delBtn = document.getElementById('pf-photo-del');
   if (ph) { img.src=ph; img.style.display='block'; emoji.style.display='none'; if(delBtn) delBtn.style.display='inline-flex'; }
   else { img.style.display='none'; emoji.style.display='block'; if(delBtn) delBtn.style.display='none'; }
-  setChips('pf-symp', p.symptoms || []);
-  setChips('pf-dis', p.diseases || []);
+  document.getElementById('pf-symp').value = (p.symptoms && p.symptoms[0]) || '';
+  document.getElementById('pf-dis').value = (p.diseases && p.diseases[0]) || '';
   openSheet('sh-pigeon');
 }
 
@@ -987,6 +1052,14 @@ function openLog(type) {
   var now = new Date();
   document.getElementById('lf-date').value = now.toISOString().split('T')[0];
   document.getElementById('lf-time').value = now.toTimeString().slice(0,5);
+  if (!document.getElementById('sh-log').dataset.editId) {
+    var foodSel = document.getElementById('lf-food'); if (foodSel) foodSel.value = '';
+    var foodTxt = document.getElementById('lf-food2'); if (foodTxt) foodTxt.value = '';
+    var suppSel = document.getElementById('lf-supp'); if (suppSel) suppSel.value = '';
+    var suppTxt = document.getElementById('lf-supp2'); if (suppTxt) suppTxt.value = '';
+    var mSel = document.getElementById('lf-mname'); if (mSel) mSel.value = '';
+    var mTxt = document.getElementById('lf-mname2'); if (mTxt) mTxt.value = '';
+  }
   openSheet('sh-log');
 }
 
@@ -1012,11 +1085,13 @@ function saveLog() {
     if (pigId) { var pig = DB.pigeons.find(function(p){return p.id===pigId;}); if (pig) pig.lastWeight = log.weight; }
   }
   if (CUR_TYPE === 'fuettern') {
-    log.food = chips('lf-food');
+    var foodSel = document.getElementById('lf-food').value;
+    log.food = foodSel ? [foodSel] : [];
     log.food2 = document.getElementById('lf-food2').value.trim();
     log.amount = document.getElementById('lf-amount').value;
     log.unit = document.getElementById('lf-unit').value;
-    log.supp = chips('lf-supp');
+    var suppSel = document.getElementById('lf-supp').value;
+    log.supp = suppSel ? [suppSel] : [];
     log.supp2 = document.getElementById('lf-supp2').value.trim();
   }
   if (CUR_TYPE === 'tierarzt') {
@@ -1030,7 +1105,9 @@ function saveLog() {
     log.vet2 = document.getElementById('lf-vet2').value.trim();
   }
   if (CUR_TYPE === 'medikation') {
-    log.mname = document.getElementById('lf-mname').value.trim();
+    var mnameSel = document.getElementById('lf-mname').value;
+    var mname2 = document.getElementById('lf-mname2').value.trim();
+    log.mname = [mnameSel, mname2].filter(Boolean).join(', ');
     log.mdose = document.getElementById('lf-mdose').value.trim();
     log.mroute = document.getElementById('lf-mroute').value;
     log.mday = document.getElementById('lf-mday').value;
@@ -1065,11 +1142,15 @@ function editLog(id) {
       document.getElementById('lf-weight2').value = l.weight2 || '';
     }
     if (l.type === 'fuettern') {
-      setChips('lf-food', l.food || []);
+      var fVal = (l.food && l.food[0]) || '';
+      var fSel = document.getElementById('lf-food');
+      fSel.value = Array.from(fSel.options).some(function(o){return o.value===fVal;}) ? fVal : '';
       document.getElementById('lf-food2').value = l.food2 || '';
       document.getElementById('lf-amount').value = l.amount || '';
       document.getElementById('lf-unit').value = l.unit || 'Gramm';
-      setChips('lf-supp', l.supp || []);
+      var sVal = (l.supp && l.supp[0]) || '';
+      var sSel = document.getElementById('lf-supp');
+      sSel.value = Array.from(sSel.options).some(function(o){return o.value===sVal;}) ? sVal : '';
       document.getElementById('lf-supp2').value = l.supp2 || '';
     }
     if (l.type === 'tierarzt') {
@@ -1083,7 +1164,11 @@ function editLog(id) {
       document.getElementById('lf-vet2').value = l.vet2 || '';
     }
     if (l.type === 'medikation') {
-      document.getElementById('lf-mname').value = l.mname || '';
+      var mSel = document.getElementById('lf-mname');
+      var mVal = l.mname || '';
+      var isKnown = Array.from(mSel.options).some(function(o){return o.value===mVal;});
+      mSel.value = isKnown ? mVal : '';
+      document.getElementById('lf-mname2').value = isKnown ? '' : mVal;
       document.getElementById('lf-mdose').value = l.mdose || '';
       document.getElementById('lf-mroute').value = l.mroute || '';
       document.getElementById('lf-mday').value = l.mday || '';
@@ -1199,8 +1284,8 @@ function showDetail(id) {
     ['Eigener Zustand', p.health2], ['Symptome', (p.symptoms||[]).join(', ') + (p.symp2 ? (p.symptoms&&p.symptoms.length?', ':'')+p.symp2 : '')],
     ['Krankheiten/Parasiten', (p.diseases||[]).join(', ') + (p.dis2?(p.diseases&&p.diseases.length?', ':'')+p.dis2:'')],
     ['Letztes Gewicht', p.lastWeight ? p.lastWeight + 'g' : ''],
-    ['Ort der Sicherung', p.found], ['Aufnahme', p.intake],
-    ['Auswilderung', p.release], ['Ort Auswilderung', p.release2],
+    ['Ort der Sicherung', p.found], ['Stadt (Sicherung)', p.foundCity], ['Aufnahme', p.intake],
+    ['Auswilderung', p.release], ['Ort Auswilderung', p.release2], ['Stadt (Auswilderung)', p.release2City],
     ['Euthanasie', p.euth], ['Grund Euthanasie', p.euth2],
     ['🖤 Verstorben am', p.death], ['Todesursache', p.death2]
   ];
@@ -1599,9 +1684,9 @@ function pigProfileBlock(p) {
     '<tr><td><b>Unterbringung</b></td><td>'+(p.housing2||p.housing||'—')+'</td><td><b>Gesundheit</b></td><td>'+(p.health||'Gesund')+'</td></tr>' +
     (p.symptoms&&p.symptoms.length?'<tr><td><b>Symptome</b></td><td colspan="3">'+(p.symptoms.join(', ')+(p.symp2?', '+p.symp2:''))+'</td></tr>':'') +
     (p.diseases&&p.diseases.length?'<tr><td><b>Krankheiten</b></td><td colspan="3">'+(p.diseases.join(', ')+(p.dis2?', '+p.dis2:''))+'</td></tr>':'') +
-    (p.found?'<tr><td><b>Ort Sicherung</b></td><td colspan="3">'+p.found+'</td></tr>':'') +
+    (p.found?'<tr><td><b>Ort Sicherung</b></td><td colspan="3">'+p.found+(p.foundCity?' ('+p.foundCity+')':'')+'</td></tr>':'') +
     (p.intake?'<tr><td><b>Aufnahme</b></td><td>'+p.intake+'</td><td><b>Auswilderung</b></td><td>'+(p.release||'—')+'</td></tr>':'') +
-    (p.release2?'<tr><td><b>Ort Auswilderung</b></td><td colspan="3">'+p.release2+'</td></tr>':'') +
+    (p.release2?'<tr><td><b>Ort Auswilderung</b></td><td colspan="3">'+p.release2+(p.release2City?' ('+p.release2City+')':'')+'</td></tr>':'') +
     (p.euth?'<tr><td><b>Euthanasie</b></td><td>'+(p.euth)+'</td><td><b>Grund</b></td><td>'+(p.euth2||'—')+'</td></tr>':'') +
     (p.death?'<tr><td><b>Verstorben am</b></td><td>'+p.death+'</td><td><b>Todesursache</b></td><td>'+(p.death2||'—')+'</td></tr>':'') +
     (p.notes?'<tr><td><b>Besonderheiten</b></td><td colspan="3">'+p.notes+'</td></tr>':'') +
@@ -3234,7 +3319,7 @@ async function sbInit() {
 
 // Starte alles
 // Warte bis CDN-Scripts geladen sind
-window.addEventListener('load', function(){ setTimeout(sbInit, 100); });
+window.addEventListener('load', function(){ fillYearDropdown(); setTimeout(sbInit, 100); });
 </script>
 </body>
 </html>
