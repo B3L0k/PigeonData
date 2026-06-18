@@ -317,6 +317,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <div class="tab" onclick="setPigTab('Krank',this)">Krank</div>
     <div class="tab" onclick="setPigTab('Verstorben',this)">Verstorben</div>
     <div class="tab" onclick="setPigTab('Euthanasiert',this)">Euthanasiert</div>
+    <div class="tab" onclick="setPigTab('Archiviert',this)">📦 Archiviert</div>
   </div>
   <div class="search-wrap"><span>🔍</span><input class="sinput" id="pig-search" placeholder="Suchen..." oninput="renderPigeons(this.value)"></div>
   <div id="pigeon-list"></div>
@@ -977,7 +978,7 @@ function openLog(type) {
   });
   var sel = document.getElementById('lf-pig');
   sel.innerHTML = '<option value="">Taube wählen...</option>';
-  DB.pigeons.forEach(function(p) {
+  DB.pigeons.filter(function(p){ return !p.archived; }).forEach(function(p) {
     var o = document.createElement('option');
     o.value = p.id;
     o.textContent = p.name + (p.ring ? ' (' + p.ring + ')' : '');
@@ -1141,10 +1142,12 @@ function pigeonCard(p) {
   var avi = p.photo
     ? '<img src="'+p.photo+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:50%">'
     : '🕊️';
+  var archBadge = p.archived ? '<div class="badge" style="background:rgba(150,150,160,.2);color:var(--mu);margin-right:6px">📦 Archiviert</div>' : '';
   return '<div class="pcard" onclick="showDetail(\'' + p.id + '\')">' +
     '<div class="pav">'+avi+'</div>' +
     '<div class="pinfo"><div class="pname">' + p.name + (p.ring ? ' <span style="color:var(--mu);font-weight:400;font-size:13px">' + p.ring + '</span>' : '') + '</div>' +
     '<div class="pmeta">' + meta + '</div></div>' +
+    archBadge +
     '<div class="badge ' + bc + '">' + (p.health || 'Gesund') + '</div></div>';
 }
 
@@ -1161,12 +1164,20 @@ function renderPigeons(filter) {
   var f = (filter || '').toLowerCase();
   var arr = DB.pigeons.filter(function(p) {
     var matchSearch = !f || p.name.toLowerCase().indexOf(f) >= 0 || (p.ring || '').toLowerCase().indexOf(f) >= 0;
-    var matchTab = CUR_PIG_TAB === 'alle' || (p.health || 'Gesund') === CUR_PIG_TAB;
+    var isArchived = !!p.archived;
+    var matchTab;
+    if (CUR_PIG_TAB === 'Archiviert') {
+      matchTab = isArchived;
+    } else if (CUR_PIG_TAB === 'alle') {
+      matchTab = !isArchived;
+    } else {
+      matchTab = !isArchived && (p.health || 'Gesund') === CUR_PIG_TAB;
+    }
     return matchSearch && matchTab;
   });
   var emptyMsg = DB.pigeons.length === 0
     ? 'Noch keine Tauben.<br>Tippe auf ＋ um eine hinzuzufügen.'
-    : 'Keine Tauben in dieser Gruppe.';
+    : (CUR_PIG_TAB === 'Archiviert' ? 'Keine archivierten Tauben.' : 'Keine Tauben in dieser Gruppe.');
   if (!arr.length) {
     list.innerHTML = '<div class="empty"><div class="ei">🕊️</div><p>' + emptyMsg + '</p></div>';
   } else {
@@ -1212,8 +1223,19 @@ function showDetail(id) {
     (logs.length ? logs.slice(0,5).map(logCard).join('') : '<div class="empty"><div class="ei">📋</div><p>Noch keine Einträge</p></div>') +
     '<button class="btn1" style="margin-top:4px" onclick="cs(\'sh-detail\');editPigeon(\'' + p.id + '\')">✏️ Profil bearbeiten</button>' +
     '<button class="btn2" onclick="cs(\'sh-detail\');openLog(\'wiegen\');setTimeout(function(){document.getElementById(\'lf-pig\').value=\'' + p.id + '\';},80)">⚖️ Wiegen</button>' +
+    '<button class="btn2" onclick="toggleArchivePigeon(\'' + p.id + '\')">' + (p.archived ? '📤 Aus Archiv zurückholen' : '📦 Archivieren') + '</button>' +
     '<button class="btnX" onclick="deletePigeon(\'' + p.id + '\')">🗑️ Taube löschen</button>';
   openSheet('sh-detail');
+}
+
+function toggleArchivePigeon(id) {
+  var p = DB.pigeons.find(function(x){return x.id===id;}); if (!p) return;
+  p.archived = !p.archived;
+  saveDB();
+  cs('sh-detail');
+  renderPigeons(document.getElementById('pig-search') ? document.getElementById('pig-search').value : '');
+  renderHome();
+  toast(p.archived ? '📦 "' + p.name + '" archiviert' : '📤 "' + p.name + '" aus Archiv zurückgeholt');
 }
 
 // ============================================================
