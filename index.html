@@ -2561,7 +2561,7 @@ async function saveNewUser() {
   showLoading('Benutzer wird angelegt…');
   try {
     var { data: { session } } = await sb.auth.getSession();
-    var resp = await fetch(SUPABASE_URL + '/functions/v1/admin-create-user', {
+    var resp = await fetch(SUPABASE_URL + '/functions/v1/bright-api', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
