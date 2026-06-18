@@ -312,7 +312,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
 <div class="page" id="pg-tauben">
   <div class="stitle">🕊️ Meine Tauben</div>
   <div class="tabs" id="pig-tabs">
-    <div class="tab on" onclick="setPigTab('alle',this)">Alle</div>
+    <div class="tab on" onclick="setPigTab('alle',this)">Aktuell</div>
     <div class="tab" onclick="setPigTab('Gesund',this)">Gesund</div>
     <div class="tab" onclick="setPigTab('Krank',this)">Krank</div>
     <div class="tab" onclick="setPigTab('Verstorben',this)">Verstorben</div>
@@ -1171,7 +1171,7 @@ function renderPigeons(filter) {
     } else if (CUR_PIG_TAB === 'alle') {
       matchTab = !isArchived;
     } else {
-      matchTab = !isArchived && (p.health || 'Gesund') === CUR_PIG_TAB;
+      matchTab = (p.health || 'Gesund') === CUR_PIG_TAB;
     }
     return matchSearch && matchTab;
   });
