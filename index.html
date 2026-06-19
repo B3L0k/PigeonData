@@ -488,7 +488,6 @@ select.fi option{background:var(--sur);color:var(--tx)}
 
     <!-- SCOPE: ALLE TAUBEN (global über ALLE Profile/Nutzer:innen) -->
     <div id="stats-scope-alle" style="display:none">
-      <div class="sgrid" id="alle-kpis"></div>
       <div class="cwrap">
         <div class="ctit">🌍 Übersicht — Gesamt, Ausgewildert, Verstorben, Euthanasiert (alle Nutzer:innen)</div>
         <div class="statchart" id="alle-statchart"></div>
@@ -1950,18 +1949,11 @@ async function renderAlleTaubenStats() {
   }
   if (data === null) {
     if (hint) hint.style.display = 'block';
-    document.getElementById('alle-kpis').innerHTML = '';
     document.getElementById('alle-statchart').innerHTML = '';
     document.getElementById('alle-ort-acc').innerHTML = '';
     return;
   }
   if (hint) hint.style.display = 'none';
-  document.getElementById('alle-kpis').innerHTML =
-    numBox('Gesamt', data.total.gesamt, 'var(--acc)') +
-    numBox('Krank', data.total.krank, 'var(--red)') +
-    numBox('Ausgewildert', data.total.ausgewildert, 'var(--grn)') +
-    numBox('Verstorben', data.total.verstorben, 'var(--mu)') +
-    numBox('Euthanasiert', data.total.euthanasiert, 'var(--orn)');
   renderStatChart('alle-statchart', data.total);
   renderOrtAccordion('alle-ort-acc', data.cities);
 }
