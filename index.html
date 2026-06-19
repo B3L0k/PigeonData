@@ -71,8 +71,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0;cursor:pointer;color:var(--mu);font-size:11px;gap:4px}
 .ni .ic{font-size:22px}.ni.on{color:var(--acc)}
 /* FAB */
-.fab{position:fixed;bottom:90px;right:20px;z-index:200;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#5a4fd4);border:none;color:#fff;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(124,106,245,.5)}
+.fab{position:fixed;bottom:90px;right:20px;z-index:200;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#5a4fd4);border:none;color:#fff;font-size:28px;cursor:grab;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(124,106,245,.5);touch-action:none;user-select:none;-webkit-user-select:none}
 .fab:active{transform:scale(.93)}
+.fab.fab-dragging{cursor:grabbing;box-shadow:0 8px 28px rgba(124,106,245,.7);transform:scale(1.06)}
 /* PAGES */
 .page{display:none;padding:20px}.page.on{display:block}
 /* CARDS */
@@ -463,7 +464,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="ni" onclick="goPage('notes',this)"><div class="ic">📝</div><span>Notizen</span></div>
 </div>
 
-<button class="fab" onclick="openSheet('sh-fab')">＋</button>
+<button class="fab" id="fab-btn" aria-label="Schnellerfassung">＋</button>
 
 <!-- === SHEETS === -->
 
@@ -2684,6 +2685,7 @@ async function finishLogin(u) {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('force-pw-screen').classList.add('hidden');
   document.getElementById('acc-name').textContent = u.name;
+  if (window.applyFabPosition) applyFabPosition();
   var avImg = document.getElementById('acc-av-img');
   var avEmoji = document.getElementById('acc-av-emoji');
   if (u.photo) { avImg.src=u.photo; avImg.style.display='block'; avEmoji.style.display='none'; }
@@ -3410,6 +3412,126 @@ async function sbInit() {
     }
   });
 }
+
+// ============================================================
+// FAB – frei positionierbarer Schnellerfassungs-Button
+// ============================================================
+// Jeder User kann den "+"-Button per Drag&Drop an eine für ihn
+// passende Stelle auf dem Bildschirm verschieben. Die Position wird
+// pro Benutzer gespeichert (localStorage, Schlüssel enthält die User-ID)
+// und beim nächsten Login automatisch wieder angewendet.
+(function() {
+  var fab = document.getElementById('fab-btn');
+  if (!fab) return;
+
+  function fabStorageKey() {
+    return 'pd_fabpos_' + ((CUR_USER && CUR_USER.id) ? CUR_USER.id : 'guest');
+  }
+
+  function clampFabPosition(left, top) {
+    var margin = 6;
+    var w = fab.offsetWidth || 56;
+    var h = fab.offsetHeight || 56;
+    // Begrenzung auf den App-Container (max-width 480px), nicht das ganze Browserfenster,
+    // damit der Button auch auf breiten Desktop-Fenstern innerhalb der App bleibt.
+    var bodyRect = document.body.getBoundingClientRect();
+    var minLeft = bodyRect.left + margin;
+    var maxLeft = bodyRect.right - w - margin;
+    var minTop = margin;
+    var maxTop = window.innerHeight - h - margin;
+    left = Math.max(minLeft, Math.min(left, Math.max(minLeft, maxLeft)));
+    top = Math.max(minTop, Math.min(top, Math.max(minTop, maxTop)));
+    return { left: left, top: top };
+  }
+
+  function setFabPosition(left, top, persist) {
+    var pos = clampFabPosition(left, top);
+    fab.style.left = pos.left + 'px';
+    fab.style.top = pos.top + 'px';
+    fab.style.right = 'auto';
+    fab.style.bottom = 'auto';
+    if (persist) {
+      try { localStorage.setItem(fabStorageKey(), JSON.stringify(pos)); } catch(e) {}
+    }
+    return pos;
+  }
+
+  // Lädt die gespeicherte Position des aktuellen Users, falls vorhanden.
+  // Wird u.a. nach dem Login aufgerufen (siehe finishLogin()).
+  window.applyFabPosition = function() {
+    var raw = null;
+    try { raw = localStorage.getItem(fabStorageKey()); } catch(e) {}
+    if (raw) {
+      try {
+        var pos = JSON.parse(raw);
+        if (typeof pos.left === 'number' && typeof pos.top === 'number') {
+          setFabPosition(pos.left, pos.top, false);
+          return;
+        }
+      } catch(e) {}
+    }
+    // Kein gespeicherter Wert für diesen User -> zurück auf Standardposition (CSS unten rechts)
+    fab.style.left = '';
+    fab.style.top = '';
+    fab.style.right = '';
+    fab.style.bottom = '';
+  };
+
+  var dragging = false;
+  var moved = false;
+  var startX = 0, startY = 0, startLeft = 0, startTop = 0;
+  var DRAG_THRESHOLD = 8; // px, ab dieser Bewegung gilt es als Ziehen statt Antippen
+
+  fab.addEventListener('pointerdown', function(e) {
+    dragging = true;
+    moved = false;
+    fab.classList.add('fab-dragging');
+    var rect = fab.getBoundingClientRect();
+    startLeft = rect.left;
+    startTop = rect.top;
+    startX = e.clientX;
+    startY = e.clientY;
+    try { fab.setPointerCapture(e.pointerId); } catch(err) {}
+  });
+
+  fab.addEventListener('pointermove', function(e) {
+    if (!dragging) return;
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+    if (!moved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+      moved = true;
+    }
+    if (moved) {
+      setFabPosition(startLeft + dx, startTop + dy, false);
+    }
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    fab.classList.remove('fab-dragging');
+    try { fab.releasePointerCapture(e.pointerId); } catch(err) {}
+    if (moved) {
+      // Drag beendet -> Endposition dauerhaft für diesen User speichern
+      var rect = fab.getBoundingClientRect();
+      setFabPosition(rect.left, rect.top, true);
+    } else {
+      // Keine nennenswerte Bewegung -> als Tipp/Klick werten und Menü öffnen
+      openSheet('sh-fab');
+    }
+  }
+
+  fab.addEventListener('pointerup', endDrag);
+  fab.addEventListener('pointercancel', endDrag);
+
+  // Bei Größenänderung (z.B. Bildschirmdrehung) Button innerhalb des sichtbaren Bereichs halten
+  window.addEventListener('resize', function() {
+    var rect = fab.getBoundingClientRect();
+    if (rect.left || rect.top) {
+      setFabPosition(rect.left, rect.top, false);
+    }
+  });
+})();
 
 // Starte alles
 // Warte bis CDN-Scripts geladen sind
