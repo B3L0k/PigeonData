@@ -71,9 +71,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0;cursor:pointer;color:var(--mu);font-size:11px;gap:4px}
 .ni .ic{font-size:22px}.ni.on{color:var(--acc)}
 /* FAB */
-.fab{position:fixed;bottom:90px;right:20px;z-index:200;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#5a4fd4);border:none;color:#fff;font-size:28px;cursor:grab;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(124,106,245,.5);touch-action:none;user-select:none;-webkit-user-select:none}
+.fab{position:fixed;bottom:90px;right:20px;z-index:200;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#5a4fd4);border:none;color:#fff;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(124,106,245,.5)}
 .fab:active{transform:scale(.93)}
-.fab.fab-dragging{cursor:grabbing;box-shadow:0 8px 28px rgba(124,106,245,.7);transform:scale(1.06)}
 /* PAGES */
 .page{display:none;padding:20px}.page.on{display:block}
 /* CARDS */
@@ -157,6 +156,22 @@ select.fi option{background:var(--sur);color:var(--tx)}
 .cbars{display:flex;align-items:flex-end;gap:6px;height:60px}
 .cbar{flex:1;background:linear-gradient(to top,var(--acc),rgba(124,106,245,.3));border-radius:4px 4px 0 0;min-height:4px}
 .clbls{display:flex;gap:6px}.clbl{flex:1;font-size:9px;color:var(--mu);text-align:center;margin-top:4px}
+/* Statistik-Umbau: Status-Balkendiagramm (Gesamt/Ausgewildert/Verstorben/Euthanasiert) */
+.statchart{display:flex;align-items:flex-end;gap:14px;height:130px;padding:10px 4px 0}
+.scol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px}
+.sval{font-size:13px;font-weight:600}
+.sbar{width:100%;max-width:46px;border-radius:6px 6px 2px 2px;min-height:4px}
+.slbl{font-size:10px;color:var(--mu);text-align:center;line-height:1.25}
+/* Statistik-Umbau: Akkordeon nach Ort der Sicherung */
+.ortacc{border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:8px;overflow:hidden;background:var(--sur)}
+.ortacc-head{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer}
+.ortacc-head .oc1{flex:1;font-weight:600;font-size:14px}
+.ortacc-head .oc2{font-size:12px;color:var(--mu)}
+.ortacc-head .ochev{color:var(--mu);transition:transform .18s;font-size:12px}
+.ortacc.open .ochev{transform:rotate(180deg)}
+.ortacc-body{max-height:0;overflow:hidden;transition:max-height .22s ease}
+.ortacc.open .ortacc-body{max-height:220px}
+.ortacc-body-in{padding:0 14px 16px}
 /* IMPORT PREVIEW */
 .imprev{background:var(--bg);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:12px;font-size:13px;color:var(--mu);line-height:1.6}
 </style>
@@ -236,6 +251,28 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <button class="btn1" onclick="saveOwnEmail()">Speichern</button>
   <button class="btn2" onclick="cs('sh-change-email')">Abbrechen</button>
   <div id="ce-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
+ </div>
+</div>
+
+<!-- CHANGE PROJECT SHEET -->
+<div class="overlay" id="sh-change-project" onclick="oc(event,'sh-change-project')" style="z-index:1003">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit">🏙️ Projektzugehörigkeit</div>
+  <p style="color:var(--mu);font-size:13px;margin-bottom:14px">Wird zur Zuordnung in Statistiken und Auswertungen genutzt.</p>
+  <div class="fg"><label class="fl">Projekt</label>
+    <select class="fi" id="cpr-project" onchange="document.getElementById('cpr-project-other').style.display=(this.value==='Andere…'?'block':'none')">
+      <option>Stuttgarter Stadttauben Projekt</option>
+      <option>Ludwigsburger Taubenhilfe</option>
+      <option>Esslinger Taubenfreunde</option>
+      <option>Eigenständig / kein Projekt</option>
+      <option>Andere…</option>
+    </select>
+  </div>
+  <div class="fg"><input class="fi" id="cpr-project-other" type="text" placeholder="Projektname eintragen" style="display:none"></div>
+  <button class="btn1" onclick="saveOwnProject()">Speichern</button>
+  <button class="btn2" onclick="cs('sh-change-project')">Abbrechen</button>
+  <div id="cpr-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
  </div>
 </div>
 
@@ -373,35 +410,71 @@ select.fi option{background:var(--sur);color:var(--tx)}
 
   <!-- USER STATS VIEW -->
   <div id="stats-user-view">
-    <div class="fg" style="margin-bottom:14px">
-      <select class="fi" id="stats-pig-filter" onchange="renderStats()">
-        <option value="">— Alle Tauben —</option>
-      </select>
+    <div class="tabs" id="stats-scope-tabs">
+      <div class="tab on" onclick="setStatsScope('meine',this)">🕊️ Meine Tauben</div>
+      <div class="tab" onclick="setStatsScope('alle',this)">🌍 Alle Tauben</div>
     </div>
-    <div class="tabs" id="stats-tabs">
-      <div class="tab on" onclick="setStatsTab('wiegen',this)">⚖️ Wiegen</div>
-      <div class="tab" onclick="setStatsTab('fuettern',this)">🌾 Füttern</div>
-      <div class="tab" onclick="setStatsTab('tierarzt',this)">👨‍⚕️ Tierarzt</div>
-      <div class="tab" onclick="setStatsTab('medikation',this)">💊 Medikation</div>
+
+    <!-- SCOPE: MEINE TAUBEN -->
+    <div id="stats-scope-meine">
+      <div class="fg" style="margin-bottom:14px">
+        <select class="fi" id="stats-pig-filter" onchange="renderStats()">
+          <option value="">— Alle Tauben —</option>
+        </select>
+      </div>
+      <div class="tabs" id="stats-tabs">
+        <div class="tab on" onclick="setStatsTab('wiegen',this)">⚖️ Wiegen</div>
+        <div class="tab" onclick="setStatsTab('fuettern',this)">🌾 Füttern</div>
+        <div class="tab" onclick="setStatsTab('tierarzt',this)">👨‍⚕️ Tierarzt</div>
+        <div class="tab" onclick="setStatsTab('medikation',this)">💊 Medikation</div>
+      </div>
+      <div id="stats-wiegen">
+        <div class="cwrap"><div class="ctit">Gewichtsverlauf (letzte 10 Messungen)</div><div class="cbars" id="wbars"></div><div class="clbls" id="wlbls"></div></div>
+        <div class="cwrap"><div class="ctit">Alle Gewichtsmessungen</div><div id="stats-weight-list"></div></div>
+      </div>
+      <div id="stats-fuettern" style="display:none">
+        <div class="cwrap"><div class="ctit">Fütterungen pro Tag (letzte 7 Tage)</div><div class="cbars" id="fbars"></div><div class="clbls" id="flbls"></div></div>
+        <div class="cwrap"><div class="ctit">Häufigste Futtersorten</div><div id="stats-food-list"></div></div>
+        <div class="cwrap"><div class="ctit">Häufigste Supplements</div><div id="stats-supp-list"></div></div>
+      </div>
+      <div id="stats-tierarzt" style="display:none">
+        <div class="cwrap"><div class="ctit">Tierarztbesuche pro Monat (letzte 6 Monate)</div><div class="cbars" id="vbars"></div><div class="clbls" id="vlbls"></div></div>
+        <div class="cwrap"><div class="ctit">Alle Tierarztbesuche</div><div id="stats-vet-list"></div></div>
+      </div>
+      <div id="stats-medikation" style="display:none">
+        <div class="cwrap"><div class="ctit">Häufigste Medikamente</div><div id="stats-med-list"></div></div>
+        <div class="cwrap"><div class="ctit">Alle Medikationseinträge</div><div id="stats-mlog-list"></div></div>
+      </div>
+      <div id="health-ov"></div>
+
+      <div class="dvd"></div>
+      <div class="cwrap">
+        <div class="ctit">🕊️ Übersicht — Gesamt, Ausgewildert, Verstorben, Euthanasiert</div>
+        <div class="statchart" id="meine-statchart"></div>
+      </div>
+      <div class="cwrap">
+        <div class="ctit">📍 Aufschlüsselung nach Ort der Sicherung</div>
+        <div id="meine-ort-acc"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:24px">
+        <button class="bexport" onclick="exportMeineOrtStatsCSV()">📊 Excel/CSV</button>
+        <button class="bexport" onclick="exportMeineOrtStatsPDF()">📄 PDF</button>
+      </div>
     </div>
-    <div id="stats-wiegen">
-      <div class="cwrap"><div class="ctit">Gewichtsverlauf (letzte 10 Messungen)</div><div class="cbars" id="wbars"></div><div class="clbls" id="wlbls"></div></div>
-      <div class="cwrap"><div class="ctit">Alle Gewichtsmessungen</div><div id="stats-weight-list"></div></div>
+
+    <!-- SCOPE: ALLE TAUBEN -->
+    <div id="stats-scope-alle" style="display:none">
+      <div class="sgrid" id="alle-kpis"></div>
+      <div class="cwrap">
+        <div class="ctit">🌍 Übersicht — Gesamt, Ausgewildert, Verstorben, Euthanasiert (alle Nutzer:innen)</div>
+        <div class="statchart" id="alle-statchart"></div>
+      </div>
+      <div class="cwrap">
+        <div class="ctit">📍 Aufschlüsselung nach Ort der Sicherung</div>
+        <div id="alle-ort-acc"></div>
+      </div>
+      <p id="alle-hint" style="color:var(--mu);font-size:12px;display:none">Diese Übersicht ist aktuell nicht verfügbar.</p>
     </div>
-    <div id="stats-fuettern" style="display:none">
-      <div class="cwrap"><div class="ctit">Fütterungen pro Tag (letzte 7 Tage)</div><div class="cbars" id="fbars"></div><div class="clbls" id="flbls"></div></div>
-      <div class="cwrap"><div class="ctit">Häufigste Futtersorten</div><div id="stats-food-list"></div></div>
-      <div class="cwrap"><div class="ctit">Häufigste Supplements</div><div id="stats-supp-list"></div></div>
-    </div>
-    <div id="stats-tierarzt" style="display:none">
-      <div class="cwrap"><div class="ctit">Tierarztbesuche pro Monat (letzte 6 Monate)</div><div class="cbars" id="vbars"></div><div class="clbls" id="vlbls"></div></div>
-      <div class="cwrap"><div class="ctit">Alle Tierarztbesuche</div><div id="stats-vet-list"></div></div>
-    </div>
-    <div id="stats-medikation" style="display:none">
-      <div class="cwrap"><div class="ctit">Häufigste Medikamente</div><div id="stats-med-list"></div></div>
-      <div class="cwrap"><div class="ctit">Alle Medikationseinträge</div><div id="stats-mlog-list"></div></div>
-    </div>
-    <div id="health-ov"></div>
   </div>
 </div>
 
@@ -464,7 +537,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="ni" onclick="goPage('notes',this)"><div class="ic">📝</div><span>Notizen</span></div>
 </div>
 
-<button class="fab" id="fab-btn" aria-label="Schnellerfassung">＋</button>
+<button class="fab" onclick="openSheet('sh-fab')">＋</button>
 
 <!-- === SHEETS === -->
 
@@ -977,24 +1050,6 @@ function cancelPigeonForm() {
   setChips('pf-dis', []);
 }
 
-// Erzeugt sofort eine stabile, eindeutige ID (echtes UUID-Format).
-// Wichtig: dadurch muss die ID NICHT mehr nachträglich ausgetauscht werden,
-// nachdem der Datensatz im Hintergrund bei Supabase gespeichert wurde – das
-// hat zuvor zu einem Race-Condition-Bug geführt (siehe deletePigeon/-Log/-Note
-// weiter unten): wurde ein frisch angelegter Datensatz sehr schnell wieder
-// gelöscht, lief der Löschbefehl noch mit der alten Behelfs-ID ins Leere,
-// während die verzögerte "Anlegen"-Anfrage den Datensatz trotzdem dauerhaft
-// in der Datenbank speicherte.
-function genId() {
-  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
-    return window.crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-
 function savePigeon() {
   var name = document.getElementById('pf-name').value.trim();
   if (!name) { alert('Bitte Name eingeben'); return; }
@@ -1039,7 +1094,7 @@ function savePigeon() {
     if (idx >= 0) DB.pigeons[idx] = Object.assign({}, DB.pigeons[idx], d);
     toast('✅ Profil aktualisiert!');
   } else {
-    d.id = genId();
+    d.id = Date.now().toString();
     d.created = new Date().toISOString();
     DB.pigeons.push(d);
     toast('🕊️ Taube gespeichert!');
@@ -1145,7 +1200,7 @@ function saveLog() {
   var pigId = document.getElementById('lf-pig').value;
   if (!pigId && DB.pigeons.length > 0) { alert('Bitte Taube wählen'); return; }
   var log = {
-    pigeonId: pigId, type: CUR_TYPE,
+    id: Date.now().toString(), pigeonId: pigId, type: CUR_TYPE,
     date: document.getElementById('lf-date').value,
     time: document.getElementById('lf-time').value,
     notes: document.getElementById('lf-notes').value.trim(),
@@ -1189,7 +1244,6 @@ function saveLog() {
     if (idx >= 0) DB.logs[idx] = Object.assign({}, DB.logs[idx], log);
     toast('✅ Eintrag aktualisiert!');
   } else {
-    log.id = genId();
     DB.logs.push(log);
     toast('✅ Eintrag gespeichert!');
   }
@@ -1499,6 +1553,7 @@ function renderLogs() {
 // STATS
 // ============================================================
 var CUR_STATS_TAB = 'wiegen';
+var CUR_STATS_SCOPE = 'meine'; // 'meine' | 'alle' — NEU: Umbau Statistik (nur User-Ansicht)
 
 function fillStatsPigFilter() {
   // User view pigeon filter
@@ -1562,6 +1617,15 @@ function fillAdminStatsPigFilter(userId) {
 function onStatsUserFilter() {
   var uid = document.getElementById('stats-user-filter').value;
   fillAdminStatsPigFilter(uid);
+  renderStats();
+}
+
+function setStatsScope(scope, el) {
+  document.querySelectorAll('#stats-scope-tabs .tab').forEach(function(t){t.classList.remove('on');});
+  if (el) el.classList.add('on');
+  CUR_STATS_SCOPE = scope;
+  document.getElementById('stats-scope-meine').style.display = (scope === 'meine') ? 'block' : 'none';
+  document.getElementById('stats-scope-alle').style.display = (scope === 'alle') ? 'block' : 'none';
   renderStats();
 }
 
@@ -1644,6 +1708,14 @@ function renderStats() {
   // USER VIEW
   if (adminView) adminView.style.display = 'none';
   if (userView) userView.style.display = 'block';
+
+  // NEU: Umbau Statistik — Scope-Weiche "Meine Tauben" / "Alle Tauben"
+  if (CUR_STATS_SCOPE === 'alle') {
+    renderAlleTaubenStats();
+    return;
+  }
+  renderMeineOrtStats();
+
   fillStatsPigFilter();
   var logs = getStatLogs();
 
@@ -1704,6 +1776,187 @@ function renderStats() {
     (Object.keys(hc).length ? Object.keys(hc).map(function(h){
       return '<div class="hrow" style="cursor:default"><div class="hinfo"><div class="ht">'+h+'</div></div><div class="badge '+badgeClass(h)+'">'+hc[h]+' Taube'+(hc[h]>1?'n':'')+'</div></div>';
     }).join('') : '<div class="empty"><div class="ei">🏥</div><p>Keine Daten</p></div>');
+}
+
+// ============================================================
+// STATISTIK-UMBAU: Meine Tauben / Alle Tauben
+// (Gesamt/Ausgewildert/Verstorben/Euthanasiert, nach Ort der Sicherung)
+// ============================================================
+
+function taubenStatusCounts(list) {
+  return {
+    gesamt:       list.length,
+    ausgewildert: list.filter(function(p){ return !!p.release; }).length,
+    verstorben:   list.filter(function(p){ return p.health === 'Verstorben'; }).length,
+    euthanasiert: list.filter(function(p){ return p.health === 'Euthanasiert'; }).length
+  };
+}
+
+function ortGroups(list) {
+  var map = {};
+  list.forEach(function(p) {
+    var ort = p.foundCity || 'Unbekannt';
+    (map[ort] = map[ort] || []).push(p);
+  });
+  return map;
+}
+
+function renderStatChart(elId, counts) {
+  var el = document.getElementById(elId); if (!el) return;
+  var max = Math.max(counts.gesamt, counts.ausgewildert, counts.verstorben, counts.euthanasiert, 1);
+  var bars = [
+    {v: counts.gesamt,       l: 'Gesamt',       c: 'var(--acc)'},
+    {v: counts.ausgewildert, l: 'Ausgewildert', c: 'var(--grn)'},
+    {v: counts.verstorben,   l: 'Verstorben',   c: 'var(--mu)'},
+    {v: counts.euthanasiert, l: 'Euthanasiert', c: 'var(--orn)'}
+  ];
+  el.innerHTML = bars.map(function(b) {
+    var h = Math.max(Math.round((b.v / max) * 88), b.v > 0 ? 6 : 2);
+    return '<div class="scol"><div class="sval">'+b.v+'</div><div class="sbar" style="height:'+h+'px;background:'+b.c+'"></div><div class="slbl">'+b.l+'</div></div>';
+  }).join('');
+}
+
+function renderOrtAccordion(elId, list) {
+  var el = document.getElementById(elId); if (!el) return;
+  var groups = ortGroups(list);
+  var cities = Object.keys(groups).sort(function(a,b){ return groups[b].length - groups[a].length; });
+  if (!cities.length) { el.innerHTML = '<p style="color:var(--mu);font-size:13px;padding:8px 0">Keine Daten</p>'; return; }
+  el.innerHTML = cities.map(function(city, i) {
+    var c = taubenStatusCounts(groups[city]);
+    return '<div class="ortacc">' +
+      '<div class="ortacc-head" onclick="this.parentElement.classList.toggle(\'open\')">' +
+        '<span class="oc1">'+city+'</span><span class="oc2">'+c.gesamt+' Tauben</span><span class="ochev">⌄</span>' +
+      '</div>' +
+      '<div class="ortacc-body"><div class="ortacc-body-in"><div class="statchart" id="'+elId+'-c'+i+'"></div></div></div>' +
+    '</div>';
+  }).join('');
+  cities.forEach(function(city, i) {
+    renderStatChart(elId+'-c'+i, taubenStatusCounts(groups[city]));
+  });
+}
+
+// --- MEINE TAUBEN: eigene Tauben (DB.pigeons ist bereits auf den eingeloggten User beschränkt) ---
+function renderMeineOrtStats() {
+  renderStatChart('meine-statchart', taubenStatusCounts(DB.pigeons));
+  renderOrtAccordion('meine-ort-acc', DB.pigeons);
+}
+
+// --- ALLE TAUBEN: Tauben aller Nutzer:innen (separate Abfrage ohne owner_id-Filter) ---
+// Hinweis: erfordert eine Supabase-RLS-SELECT-Policy auf "pigeons", die angemeldeten
+// Usern das Lesen ALLER Zeilen erlaubt (nicht nur der eigenen) — siehe Hinweis im Chat.
+var ALLE_TAUBEN_CACHE = null;
+async function loadAlleTaubenFuerStatistik() {
+  if (!sb || !SB_USER) return null;
+  try {
+    var res = await sb.from('pigeons').select('*');
+    if (res.error) throw res.error;
+    return (res.data || []).map(function(row) {
+      var extra = row.data || {};
+      return Object.assign({}, extra, {
+        id:        row.id,
+        health:    row.health_status || extra.health || 'Gesund',
+        foundCity: extra.foundCity || '',
+        release:   extra.release || ''
+      });
+    });
+  } catch (e) {
+    console.warn('Alle-Tauben-Statistik Fehler:', e.message);
+    return null; // null = Fehler/keine Berechtigung (wird erneut versucht), [] = erfolgreich aber leer
+  }
+}
+
+async function renderAlleTaubenStats() {
+  var hint = document.getElementById('alle-hint');
+  var list = ALLE_TAUBEN_CACHE;
+  if (list === null) {
+    list = await loadAlleTaubenFuerStatistik();
+    ALLE_TAUBEN_CACHE = list;
+  }
+  if (list === null) {
+    if (hint) hint.style.display = 'block';
+    document.getElementById('alle-kpis').innerHTML = '';
+    document.getElementById('alle-statchart').innerHTML = '';
+    document.getElementById('alle-ort-acc').innerHTML = '';
+    return;
+  }
+  if (hint) hint.style.display = 'none';
+  var counts = taubenStatusCounts(list);
+  document.getElementById('alle-kpis').innerHTML =
+    numBox('Gesamt', counts.gesamt, 'var(--acc)') +
+    numBox('Ausgewildert', counts.ausgewildert, 'var(--grn)') +
+    numBox('Verstorben', counts.verstorben, 'var(--mu)') +
+    numBox('Euthanasiert', counts.euthanasiert, 'var(--orn)');
+  renderStatChart('alle-statchart', counts);
+  renderOrtAccordion('alle-ort-acc', list);
+}
+
+// --- Export "Meine Tauben"-Statistik (CSV/Excel + PDF) ---
+function getMeineOrtRows() {
+  var groups = ortGroups(DB.pigeons);
+  var rows = Object.keys(groups).map(function(city) {
+    var c = taubenStatusCounts(groups[city]);
+    return {Ort: city, Gesamt: c.gesamt, Ausgewildert: c.ausgewildert, Verstorben: c.verstorben, Euthanasiert: c.euthanasiert};
+  });
+  var total = taubenStatusCounts(DB.pigeons);
+  rows.push({Ort: 'Gesamt (alle Orte)', Gesamt: total.gesamt, Ausgewildert: total.ausgewildert, Verstorben: total.verstorben, Euthanasiert: total.euthanasiert});
+  return rows;
+}
+
+function exportMeineOrtStatsCSV() {
+  if (!DB.pigeons.length) { toast('Keine Daten zum Exportieren'); return; }
+  var rows = getMeineOrtRows();
+  var csv = '\ufeff';
+  csv += 'PigeonData — Meine Tauben Statistik\n';
+  csv += 'Exportiert:;'+new Date().toLocaleString('de')+'\n';
+  csv += 'Benutzer:;'+(CUR_USER ? CUR_USER.name : '')+'\n\n';
+  csv += 'Ort;Gesamt;Ausgewildert;Verstorben;Euthanasiert\n';
+  rows.forEach(function(r){ csv += r.Ort+';'+r.Gesamt+';'+r.Ausgewildert+';'+r.Verstorben+';'+r.Euthanasiert+'\n'; });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv;charset=utf-8;'}));
+  a.download = 'pigeondata_meine_tauben_statistik_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+  toast('📊 CSV exportiert!');
+}
+
+function exportMeineOrtStatsPDF() {
+  if (!DB.pigeons.length) { toast('Keine Daten zum Exportieren'); return; }
+  function statRow(label, val, color) {
+    return '<tr><td style="padding:8px 12px;font-size:13px">'+label+'</td><td style="padding:8px 12px;font-size:16px;font-weight:700;color:'+(color||'#1a1a2e')+'">'+val+'</td></tr>';
+  }
+  var rows = getMeineOrtRows();
+  var total = taubenStatusCounts(DB.pigeons);
+  var rowsHtml = rows.map(function(r) {
+    return '<tr><td style="padding:6px 12px;font-size:12px">'+r.Ort+'</td>'+
+      '<td style="padding:6px 12px;font-size:12px;text-align:center">'+r.Gesamt+'</td>'+
+      '<td style="padding:6px 12px;font-size:12px;text-align:center">'+r.Ausgewildert+'</td>'+
+      '<td style="padding:6px 12px;font-size:12px;text-align:center">'+r.Verstorben+'</td>'+
+      '<td style="padding:6px 12px;font-size:12px;text-align:center">'+r.Euthanasiert+'</td></tr>';
+  }).join('');
+  var html = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>PigeonData Meine Tauben Statistik</title>'+
+    '<style>body{font-family:Arial,sans-serif;font-size:12px;margin:24px;color:#111}'+
+    'h1{font-size:20px;margin-bottom:4px}h2{font-size:15px;color:#555;margin:20px 0 8px;border-bottom:2px solid #eee;padding-bottom:4px}'+
+    '.hb{background:#f4f4f8;border:1px solid #ccc;border-radius:6px;padding:14px;margin-bottom:20px}'+
+    'table.stat{width:100%;border-collapse:collapse;border:1px solid #ddd}'+
+    'table.stat td,table.stat th{border-bottom:1px solid #eee}'+
+    'table.stat tr:last-child td{border-bottom:none}'+
+    'table.stat th{background:#f4f4f8;text-align:left;padding:6px 12px;font-size:11px}'+
+    '.footer{margin-top:28px;font-size:10px;color:#aaa;text-align:right}'+
+    '@media print{body{margin:10px}}</style></head><body>'+
+    '<div class="hb"><h1>🕊️ PigeonData — Meine Tauben Statistik</h1>'+
+    '<p style="color:#555;font-size:12px">Exportiert: '+new Date().toLocaleString('de')+'</p>'+
+    '<p style="font-size:12px"><b>Benutzer:</b> '+(CUR_USER ? CUR_USER.name : '')+'</p></div>'+
+    '<h2>Übersicht</h2><table class="stat"><tbody>'+
+      statRow('Gesamt', total.gesamt, '#7c6af5')+
+      statRow('Ausgewildert', total.ausgewildert, '#54c07a')+
+      statRow('Verstorben', total.verstorben, '#888')+
+      statRow('Euthanasiert', total.euthanasiert, '#e0a854')+
+    '</tbody></table>'+
+    '<h2>Nach Ort der Sicherung</h2>'+
+    '<table class="stat"><thead><tr><th>Ort</th><th>Gesamt</th><th>Ausgewildert</th><th>Verstorben</th><th>Euthanasiert</th></tr></thead><tbody>'+rowsHtml+'</tbody></table>'+
+    '<div class="footer">PigeonData — Statistik Export</div>'+
+    '<scr'+'ipt>window.onload=function(){window.print();}<\/scr'+'ipt></body></html>';
+  window.open(URL.createObjectURL(new Blob([html], {type: 'text/html;charset=utf-8'})), '_blank');
+  toast('📄 PDF öffnet sich — Drucken → Als PDF speichern');
 }
 
 // ============================================================
@@ -1902,7 +2155,7 @@ function saveNote() {
     if (idx>=0) DB.notes[idx] = Object.assign({}, DB.notes[idx], d);
     toast('✅ Notiz aktualisiert!');
   } else {
-    d.id = genId();
+    d.id = Date.now().toString();
     d.created = new Date().toISOString();
     DB.notes.push(d);
     toast('📝 Notiz gespeichert!');
@@ -2680,22 +2933,18 @@ function loginUser(u) {
   finishLogin(u);
 }
 
-async function finishLogin(u) {
+function finishLogin(u) {
   CUR_USER = u;
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('force-pw-screen').classList.add('hidden');
+  loadDB();
   document.getElementById('acc-name').textContent = u.name;
-  if (window.applyFabPosition) applyFabPosition();
   var avImg = document.getElementById('acc-av-img');
   var avEmoji = document.getElementById('acc-av-emoji');
   if (u.photo) { avImg.src=u.photo; avImg.style.display='block'; avEmoji.style.display='none'; }
   else { avImg.style.display='none'; avEmoji.style.display='block'; avEmoji.textContent=u.name.charAt(0).toUpperCase(); }
   updateNavForUser();
   setTimeout(checkUnreadMessages, 400);
-  // Erst die Daten vollständig laden (zeigt währenddessen das Lade-Overlay aus loadDB()),
-  // dann erst rendern – sonst zeigt die Startseite kurz 0 Tauben/Einträge an,
-  // weil DB zu diesem Zeitpunkt noch leer ist.
-  await loadDB();
   if (isAdmin(u)) {
     goPage('home', document.querySelector('.ni'));
   }
@@ -2777,6 +3026,7 @@ function openUserSettings() {
       adminBadge+
     '</div>'+
     '<div class="hrow" onclick="openChangeEmailSheet()"><div class="hi">📧</div><div class="hinfo"><div class="ht">E-Mail</div><div class="hs2">'+(CUR_USER.email?CUR_USER.email:'Keine hinterlegt (optional)')+'</div></div></div>'+
+    '<div class="hrow" onclick="openChangeProjectSheet()"><div class="hi">🏙️</div><div class="hinfo"><div class="ht">Projektzugehörigkeit</div><div class="hs2">'+(CUR_USER.project?CUR_USER.project:'Keine hinterlegt')+'</div></div></div>'+
     '<div class="hrow" onclick="openChangePasswordSheet()"><div class="hi">🔑</div><div class="hinfo"><div class="ht">Passwort ändern</div><div class="hs2">Eigenes Passwort aktualisieren</div></div></div>'+
     (isAdmin(CUR_USER)?'<div class="hrow" onclick="adminCreateUser()"><div class="hi">➕</div><div class="hinfo"><div class="ht">Neuen Benutzer anlegen</div><div class="hs2">Benutzername, E-Mail & vorl. Passwort vergeben</div></div></div>':'')+
     '<div class="hrow" onclick="exportOwnBackup()"><div class="hi">💾</div><div class="hinfo"><div class="ht">Datensicherung</div><div class="hs2">Eigene Daten als Datei exportieren</div></div></div>'+
@@ -2791,6 +3041,50 @@ function openChangeEmailSheet() {
   document.getElementById('ce-error').textContent = '';
   cs('sh-user-settings');
   openSheet('sh-change-email');
+}
+
+function openChangeProjectSheet() {
+  var sel = document.getElementById('cpr-project');
+  var other = document.getElementById('cpr-project-other');
+  var known = ['Stuttgarter Stadttauben Projekt','Ludwigsburger Taubenhilfe','Esslinger Taubenfreunde','Eigenständig / kein Projekt'];
+  var cur = CUR_USER.project || '';
+  if (cur && known.indexOf(cur) === -1) {
+    sel.value = 'Andere…';
+    other.style.display = 'block';
+    other.value = cur;
+  } else {
+    sel.value = cur || known[0];
+    other.style.display = 'none';
+    other.value = '';
+  }
+  document.getElementById('cpr-error').textContent = '';
+  cs('sh-user-settings');
+  openSheet('sh-change-project');
+}
+
+async function saveOwnProject() {
+  var sel = document.getElementById('cpr-project').value;
+  var other = document.getElementById('cpr-project-other').value.trim();
+  var project = (sel === 'Andere…') ? other : sel;
+  var errEl = document.getElementById('cpr-error');
+  errEl.textContent = '';
+  if (sel === 'Andere…' && !other) { errEl.textContent = 'Bitte Projektnamen eingeben'; return; }
+  showLoading('Speichern…');
+  try {
+    if (sb && SB_USER) {
+      var { error } = await sb.from('profiles').update({ project: project }).eq('id', CUR_USER.id);
+      if (error) { hideLoading(); errEl.textContent = '❌ ' + error.message; return; }
+    }
+    CUR_USER.project = project;
+    var me = USERS.find(function(u){ return u.id === CUR_USER.id; });
+    if (me) me.project = project;
+    hideLoading();
+    cs('sh-change-project');
+    toast('✅ Projektzugehörigkeit gespeichert');
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = '❌ ' + e.message;
+  }
 }
 
 async function saveOwnEmail() {
@@ -3018,6 +3312,7 @@ async function loadUsers() {
       photo: row.avatar_url || row.photo || '',
       role:  row.role || 'user',
       email: row.email || '',
+      project: row.project || '', // NEU: Projektzugehörigkeit
       must_change_pw: !!row.must_change_pw
     }));
   } catch (e) {
@@ -3041,7 +3336,8 @@ async function saveUsers() {
     pin:         me.pin  || '',
     avatar_url:  me.photo || '',
     role:        me.role  || 'user',
-    email:       me.email || SB_USER.email || ''
+    email:       me.email || SB_USER.email || '',
+    project:     me.project || ''
   }, { onConflict: 'id' });
   if (error) console.warn('saveUsers Fehler:', error.message);
 }
@@ -3120,12 +3416,6 @@ async function loadDB() {
   hideLoading();
 }
 
-// Kette aller bisherigen/laufenden Speichervorgänge. Dient dazu, dass
-// deletePigeon/deleteLog/deleteNote (weiter unten) vor dem eigentlichen
-// Löschen abwarten können, bis ein evtl. noch laufendes Speichern (z.B. das
-// Anlegen genau dieses Datensatzes) bei Supabase abgeschlossen ist.
-let _saveQueue = Promise.resolve();
-
 async function saveDB() {
   if (!SB_USER) {
     // Fallback localStorage
@@ -3133,13 +3423,8 @@ async function saveDB() {
     return;
   }
   const uid = SB_USER.id;
-  // Wir speichern im Hintergrund – der Aufrufer muss nicht awaiten, damit die UI
-  // nicht blockiert wird. Die eigentlichen Netzwerk-Schreibvorgänge werden aber
-  // seriell verkettet (nie parallel/überlappend), damit z.B. das Anlegen und ein
-  // direkt darauf folgendes Löschen derselben Taube nicht in falscher Reihenfolge
-  // bei Supabase ankommen.
-  _saveQueue = _saveQueue.then(() => _saveDBAsync(uid)).catch(e => console.warn('saveDB Fehler:', e.message));
-  return _saveQueue;
+  // Wir speichern im Hintergrund – kein await um UI nicht zu blockieren
+  _saveDBAsync(uid).catch(e => console.warn('saveDB Fehler:', e.message));
 }
 
 async function _saveDBAsync(uid) {
@@ -3334,14 +3619,11 @@ async function onAuthSuccess(user) {
 const _origDeletePigeon = deletePigeon;
 async function deletePigeon(id) {
   if (!confirm('Taube wirklich löschen? Alle zugehörigen Einträge bleiben erhalten.')) return;
-  const target = DB.pigeons.find(p => p.id === id);
-  const realId = (target && target._sbId) || id; // falls die Taube noch nicht final synchronisiert war
   DB.pigeons = DB.pigeons.filter(p => p.id !== id);
   cs('sh-detail'); renderPigeons(''); renderHome();
   toast('Taube gelöscht');
   if (SB_USER) {
-    await _saveQueue.catch(() => {}); // erst warten, bis ein evtl. noch laufendes Speichern (z.B. das Anlegen) fertig ist
-    const { error } = await sb.from('pigeons').delete().eq('id', realId);
+    const { error } = await sb.from('pigeons').delete().eq('id', id);
     if (error) console.warn('deletePigeon:', error.message);
   }
 }
@@ -3350,14 +3632,11 @@ async function deletePigeon(id) {
 const _origDeleteLog = deleteLog;
 async function deleteLog(id) {
   if (!confirm('Eintrag wirklich löschen?')) return;
-  const target = DB.logs.find(l => l.id === id);
-  const realId = (target && target._sbId) || id;
   DB.logs = DB.logs.filter(l => l.id !== id);
   renderLogs(); renderHome();
   toast('Eintrag gelöscht');
   if (SB_USER) {
-    await _saveQueue.catch(() => {});
-    await sb.from('logs').delete().eq('id', realId);
+    await sb.from('logs').delete().eq('id', id);
   }
 }
 
@@ -3365,13 +3644,10 @@ async function deleteLog(id) {
 const _origDeleteNote = deleteNote;
 async function deleteNote(id) {
   if (!confirm('Notiz wirklich löschen?')) return;
-  const target = (DB.notes||[]).find(n => n.id === id);
-  const realId = (target && target._sbId) || id;
   DB.notes = (DB.notes||[]).filter(n => n.id !== id);
   renderNotes(''); toast('Notiz gelöscht');
   if (SB_USER) {
-    await _saveQueue.catch(() => {});
-    await sb.from('notes').delete().eq('id', realId);
+    await sb.from('notes').delete().eq('id', id);
   }
 }
 
@@ -3412,126 +3688,6 @@ async function sbInit() {
     }
   });
 }
-
-// ============================================================
-// FAB – frei positionierbarer Schnellerfassungs-Button
-// ============================================================
-// Jeder User kann den "+"-Button per Drag&Drop an eine für ihn
-// passende Stelle auf dem Bildschirm verschieben. Die Position wird
-// pro Benutzer gespeichert (localStorage, Schlüssel enthält die User-ID)
-// und beim nächsten Login automatisch wieder angewendet.
-(function() {
-  var fab = document.getElementById('fab-btn');
-  if (!fab) return;
-
-  function fabStorageKey() {
-    return 'pd_fabpos_' + ((CUR_USER && CUR_USER.id) ? CUR_USER.id : 'guest');
-  }
-
-  function clampFabPosition(left, top) {
-    var margin = 6;
-    var w = fab.offsetWidth || 56;
-    var h = fab.offsetHeight || 56;
-    // Begrenzung auf den App-Container (max-width 480px), nicht das ganze Browserfenster,
-    // damit der Button auch auf breiten Desktop-Fenstern innerhalb der App bleibt.
-    var bodyRect = document.body.getBoundingClientRect();
-    var minLeft = bodyRect.left + margin;
-    var maxLeft = bodyRect.right - w - margin;
-    var minTop = margin;
-    var maxTop = window.innerHeight - h - margin;
-    left = Math.max(minLeft, Math.min(left, Math.max(minLeft, maxLeft)));
-    top = Math.max(minTop, Math.min(top, Math.max(minTop, maxTop)));
-    return { left: left, top: top };
-  }
-
-  function setFabPosition(left, top, persist) {
-    var pos = clampFabPosition(left, top);
-    fab.style.left = pos.left + 'px';
-    fab.style.top = pos.top + 'px';
-    fab.style.right = 'auto';
-    fab.style.bottom = 'auto';
-    if (persist) {
-      try { localStorage.setItem(fabStorageKey(), JSON.stringify(pos)); } catch(e) {}
-    }
-    return pos;
-  }
-
-  // Lädt die gespeicherte Position des aktuellen Users, falls vorhanden.
-  // Wird u.a. nach dem Login aufgerufen (siehe finishLogin()).
-  window.applyFabPosition = function() {
-    var raw = null;
-    try { raw = localStorage.getItem(fabStorageKey()); } catch(e) {}
-    if (raw) {
-      try {
-        var pos = JSON.parse(raw);
-        if (typeof pos.left === 'number' && typeof pos.top === 'number') {
-          setFabPosition(pos.left, pos.top, false);
-          return;
-        }
-      } catch(e) {}
-    }
-    // Kein gespeicherter Wert für diesen User -> zurück auf Standardposition (CSS unten rechts)
-    fab.style.left = '';
-    fab.style.top = '';
-    fab.style.right = '';
-    fab.style.bottom = '';
-  };
-
-  var dragging = false;
-  var moved = false;
-  var startX = 0, startY = 0, startLeft = 0, startTop = 0;
-  var DRAG_THRESHOLD = 8; // px, ab dieser Bewegung gilt es als Ziehen statt Antippen
-
-  fab.addEventListener('pointerdown', function(e) {
-    dragging = true;
-    moved = false;
-    fab.classList.add('fab-dragging');
-    var rect = fab.getBoundingClientRect();
-    startLeft = rect.left;
-    startTop = rect.top;
-    startX = e.clientX;
-    startY = e.clientY;
-    try { fab.setPointerCapture(e.pointerId); } catch(err) {}
-  });
-
-  fab.addEventListener('pointermove', function(e) {
-    if (!dragging) return;
-    var dx = e.clientX - startX;
-    var dy = e.clientY - startY;
-    if (!moved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
-      moved = true;
-    }
-    if (moved) {
-      setFabPosition(startLeft + dx, startTop + dy, false);
-    }
-  });
-
-  function endDrag(e) {
-    if (!dragging) return;
-    dragging = false;
-    fab.classList.remove('fab-dragging');
-    try { fab.releasePointerCapture(e.pointerId); } catch(err) {}
-    if (moved) {
-      // Drag beendet -> Endposition dauerhaft für diesen User speichern
-      var rect = fab.getBoundingClientRect();
-      setFabPosition(rect.left, rect.top, true);
-    } else {
-      // Keine nennenswerte Bewegung -> als Tipp/Klick werten und Menü öffnen
-      openSheet('sh-fab');
-    }
-  }
-
-  fab.addEventListener('pointerup', endDrag);
-  fab.addEventListener('pointercancel', endDrag);
-
-  // Bei Größenänderung (z.B. Bildschirmdrehung) Button innerhalb des sichtbaren Bereichs halten
-  window.addEventListener('resize', function() {
-    var rect = fab.getBoundingClientRect();
-    if (rect.left || rect.top) {
-      setFabPosition(rect.left, rect.top, false);
-    }
-  });
-})();
 
 // Starte alles
 // Warte bis CDN-Scripts geladen sind
