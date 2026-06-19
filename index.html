@@ -71,8 +71,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 0;cursor:pointer;color:var(--mu);font-size:11px;gap:4px}
 .ni .ic{font-size:22px}.ni.on{color:var(--acc)}
 /* FAB */
-.fab{position:fixed;bottom:90px;right:20px;z-index:200;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#5a4fd4);border:none;color:#fff;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(124,106,245,.5)}
+.fab{position:fixed;bottom:90px;right:20px;z-index:200;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--acc),#5a4fd4);border:none;color:#fff;font-size:28px;cursor:grab;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(124,106,245,.5);touch-action:none;user-select:none;-webkit-user-select:none}
 .fab:active{transform:scale(.93)}
+.fab.fab-dragging{cursor:grabbing;box-shadow:0 8px 28px rgba(124,106,245,.7);transform:scale(1.06)}
 /* PAGES */
 .page{display:none;padding:20px}.page.on{display:block}
 /* CARDS */
@@ -462,7 +463,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
       </div>
     </div>
 
-    <!-- SCOPE: ALLE TAUBEN -->
+    <!-- SCOPE: ALLE TAUBEN (global über ALLE Profile/Nutzer:innen) -->
     <div id="stats-scope-alle" style="display:none">
       <div class="sgrid" id="alle-kpis"></div>
       <div class="cwrap">
@@ -473,7 +474,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
         <div class="ctit">📍 Aufschlüsselung nach Ort der Sicherung</div>
         <div id="alle-ort-acc"></div>
       </div>
-      <p id="alle-hint" style="color:var(--mu);font-size:12px;display:none">Diese Übersicht ist aktuell nicht verfügbar.</p>
+      <p id="alle-hint" style="color:var(--mu);font-size:12px;display:none">Diese Übersicht ist aktuell nicht verfügbar. Bitte das SQL-Setup für die globale Statistik einrichten (siehe Dokumentation).</p>
     </div>
   </div>
 </div>
@@ -537,7 +538,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="ni" onclick="goPage('notes',this)"><div class="ic">📝</div><span>Notizen</span></div>
 </div>
 
-<button class="fab" onclick="openSheet('sh-fab')">＋</button>
+<button class="fab" id="fab-btn" aria-label="Schnellerfassung">＋</button>
 
 <!-- === SHEETS === -->
 
@@ -1050,6 +1051,24 @@ function cancelPigeonForm() {
   setChips('pf-dis', []);
 }
 
+// Erzeugt sofort eine stabile, eindeutige ID (echtes UUID-Format).
+// Wichtig: dadurch muss die ID NICHT mehr nachträglich ausgetauscht werden,
+// nachdem der Datensatz im Hintergrund bei Supabase gespeichert wurde – das
+// hat zuvor zu einem Race-Condition-Bug geführt (siehe deletePigeon/-Log/-Note
+// weiter unten): wurde ein frisch angelegter Datensatz sehr schnell wieder
+// gelöscht, lief der Löschbefehl noch mit der alten Behelfs-ID ins Leere,
+// während die verzögerte "Anlegen"-Anfrage den Datensatz trotzdem dauerhaft
+// in der Datenbank speicherte.
+function genId() {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 function savePigeon() {
   var name = document.getElementById('pf-name').value.trim();
   if (!name) { alert('Bitte Name eingeben'); return; }
@@ -1094,7 +1113,7 @@ function savePigeon() {
     if (idx >= 0) DB.pigeons[idx] = Object.assign({}, DB.pigeons[idx], d);
     toast('✅ Profil aktualisiert!');
   } else {
-    d.id = Date.now().toString();
+    d.id = genId();
     d.created = new Date().toISOString();
     DB.pigeons.push(d);
     toast('🕊️ Taube gespeichert!');
@@ -1200,7 +1219,7 @@ function saveLog() {
   var pigId = document.getElementById('lf-pig').value;
   if (!pigId && DB.pigeons.length > 0) { alert('Bitte Taube wählen'); return; }
   var log = {
-    id: Date.now().toString(), pigeonId: pigId, type: CUR_TYPE,
+    pigeonId: pigId, type: CUR_TYPE,
     date: document.getElementById('lf-date').value,
     time: document.getElementById('lf-time').value,
     notes: document.getElementById('lf-notes').value.trim(),
@@ -1244,6 +1263,7 @@ function saveLog() {
     if (idx >= 0) DB.logs[idx] = Object.assign({}, DB.logs[idx], log);
     toast('✅ Eintrag aktualisiert!');
   } else {
+    log.id = genId();
     DB.logs.push(log);
     toast('✅ Eintrag gespeichert!');
   }
@@ -1553,7 +1573,7 @@ function renderLogs() {
 // STATS
 // ============================================================
 var CUR_STATS_TAB = 'wiegen';
-var CUR_STATS_SCOPE = 'meine'; // 'meine' | 'alle' — NEU: Umbau Statistik (nur User-Ansicht)
+var CUR_STATS_SCOPE = 'meine'; // 'meine' | 'alle' — Umbau Statistik (nur User-Ansicht)
 
 function fillStatsPigFilter() {
   // User view pigeon filter
@@ -1709,7 +1729,7 @@ function renderStats() {
   if (adminView) adminView.style.display = 'none';
   if (userView) userView.style.display = 'block';
 
-  // NEU: Umbau Statistik — Scope-Weiche "Meine Tauben" / "Alle Tauben"
+  // Umbau Statistik — Scope-Weiche "Meine Tauben" / "Alle Tauben"
   if (CUR_STATS_SCOPE === 'alle') {
     renderAlleTaubenStats();
     return;
@@ -1801,6 +1821,14 @@ function ortGroups(list) {
   return map;
 }
 
+// Wandelt eine Taubenliste in { Stadt: {gesamt,ausgewildert,verstorben,euthanasiert} } um
+function cityCountsFromList(list) {
+  var groups = ortGroups(list);
+  var out = {};
+  Object.keys(groups).forEach(function(city) { out[city] = taubenStatusCounts(groups[city]); });
+  return out;
+}
+
 function renderStatChart(elId, counts) {
   var el = document.getElementById(elId); if (!el) return;
   var max = Math.max(counts.gesamt, counts.ausgewildert, counts.verstorben, counts.euthanasiert, 1);
@@ -1816,13 +1844,13 @@ function renderStatChart(elId, counts) {
   }).join('');
 }
 
-function renderOrtAccordion(elId, list) {
+// elId: Ziel-Container | cityCounts: { Stadt: {gesamt,ausgewildert,verstorben,euthanasiert} }
+function renderOrtAccordion(elId, cityCounts) {
   var el = document.getElementById(elId); if (!el) return;
-  var groups = ortGroups(list);
-  var cities = Object.keys(groups).sort(function(a,b){ return groups[b].length - groups[a].length; });
+  var cities = Object.keys(cityCounts).sort(function(a,b){ return cityCounts[b].gesamt - cityCounts[a].gesamt; });
   if (!cities.length) { el.innerHTML = '<p style="color:var(--mu);font-size:13px;padding:8px 0">Keine Daten</p>'; return; }
   el.innerHTML = cities.map(function(city, i) {
-    var c = taubenStatusCounts(groups[city]);
+    var c = cityCounts[city];
     return '<div class="ortacc">' +
       '<div class="ortacc-head" onclick="this.parentElement.classList.toggle(\'open\')">' +
         '<span class="oc1">'+city+'</span><span class="oc2">'+c.gesamt+' Tauben</span><span class="ochev">⌄</span>' +
@@ -1831,26 +1859,55 @@ function renderOrtAccordion(elId, list) {
     '</div>';
   }).join('');
   cities.forEach(function(city, i) {
-    renderStatChart(elId+'-c'+i, taubenStatusCounts(groups[city]));
+    renderStatChart(elId+'-c'+i, cityCounts[city]);
   });
 }
 
 // --- MEINE TAUBEN: eigene Tauben (DB.pigeons ist bereits auf den eingeloggten User beschränkt) ---
 function renderMeineOrtStats() {
   renderStatChart('meine-statchart', taubenStatusCounts(DB.pigeons));
-  renderOrtAccordion('meine-ort-acc', DB.pigeons);
+  renderOrtAccordion('meine-ort-acc', cityCountsFromList(DB.pigeons));
 }
 
-// --- ALLE TAUBEN: Tauben aller Nutzer:innen (separate Abfrage ohne owner_id-Filter) ---
-// Hinweis: erfordert eine Supabase-RLS-SELECT-Policy auf "pigeons", die angemeldeten
-// Usern das Lesen ALLER Zeilen erlaubt (nicht nur der eigenen) — siehe Hinweis im Chat.
-var ALLE_TAUBEN_CACHE = null;
+// --- ALLE TAUBEN: global über ALLE Profile/Nutzer:innen hinweg ---
+// 1. Bevorzugt: Postgres-Funktion get_global_pigeon_stats() (SECURITY DEFINER).
+//    Liefert NUR aggregierte Zahlen je Stadt zurück — keine Einzeldaten anderer
+//    Nutzer:innen werden an den Client übertragen. Muss einmalig in Supabase
+//    angelegt werden (SQL siehe Projekt-Dokumentation/Chat).
+// 2. Fallback: direkte Abfrage aller Tauben-Zeilen (erfordert eine entsprechend
+//    offene RLS-SELECT-Policy auf "pigeons"). Wird nur genutzt, falls die RPC
+//    (noch) nicht existiert.
+var ALLE_TAUBEN_CACHE = null; // { total:{...}, cities:{...} } | null (Fehler -> wird beim nächsten Aufruf erneut versucht)
+
 async function loadAlleTaubenFuerStatistik() {
   if (!sb || !SB_USER) return null;
+
+  try {
+    var rpc = await sb.rpc('get_global_pigeon_stats');
+    if (!rpc.error && rpc.data) {
+      var cities = {};
+      var total = {gesamt:0, ausgewildert:0, verstorben:0, euthanasiert:0};
+      rpc.data.forEach(function(row) {
+        var c = {
+          gesamt:       Number(row.gesamt)       || 0,
+          ausgewildert: Number(row.ausgewildert) || 0,
+          verstorben:   Number(row.verstorben)   || 0,
+          euthanasiert: Number(row.euthanasiert) || 0
+        };
+        cities[row.found_city || 'Unbekannt'] = c;
+        total.gesamt       += c.gesamt;
+        total.ausgewildert += c.ausgewildert;
+        total.verstorben   += c.verstorben;
+        total.euthanasiert += c.euthanasiert;
+      });
+      return { total: total, cities: cities };
+    }
+  } catch (e) { /* RPC evtl. noch nicht eingerichtet -> Fallback unten */ }
+
   try {
     var res = await sb.from('pigeons').select('*');
     if (res.error) throw res.error;
-    return (res.data || []).map(function(row) {
+    var list = (res.data || []).map(function(row) {
       var extra = row.data || {};
       return Object.assign({}, extra, {
         id:        row.id,
@@ -1859,20 +1916,21 @@ async function loadAlleTaubenFuerStatistik() {
         release:   extra.release || ''
       });
     });
-  } catch (e) {
-    console.warn('Alle-Tauben-Statistik Fehler:', e.message);
-    return null; // null = Fehler/keine Berechtigung (wird erneut versucht), [] = erfolgreich aber leer
+    return { total: taubenStatusCounts(list), cities: cityCountsFromList(list) };
+  } catch (e2) {
+    console.warn('Alle-Tauben-Statistik Fehler:', e2.message);
+    return null;
   }
 }
 
 async function renderAlleTaubenStats() {
   var hint = document.getElementById('alle-hint');
-  var list = ALLE_TAUBEN_CACHE;
-  if (list === null) {
-    list = await loadAlleTaubenFuerStatistik();
-    ALLE_TAUBEN_CACHE = list;
+  var data = ALLE_TAUBEN_CACHE;
+  if (data === null) {
+    data = await loadAlleTaubenFuerStatistik();
+    ALLE_TAUBEN_CACHE = data;
   }
-  if (list === null) {
+  if (data === null) {
     if (hint) hint.style.display = 'block';
     document.getElementById('alle-kpis').innerHTML = '';
     document.getElementById('alle-statchart').innerHTML = '';
@@ -1880,21 +1938,20 @@ async function renderAlleTaubenStats() {
     return;
   }
   if (hint) hint.style.display = 'none';
-  var counts = taubenStatusCounts(list);
   document.getElementById('alle-kpis').innerHTML =
-    numBox('Gesamt', counts.gesamt, 'var(--acc)') +
-    numBox('Ausgewildert', counts.ausgewildert, 'var(--grn)') +
-    numBox('Verstorben', counts.verstorben, 'var(--mu)') +
-    numBox('Euthanasiert', counts.euthanasiert, 'var(--orn)');
-  renderStatChart('alle-statchart', counts);
-  renderOrtAccordion('alle-ort-acc', list);
+    numBox('Gesamt', data.total.gesamt, 'var(--acc)') +
+    numBox('Ausgewildert', data.total.ausgewildert, 'var(--grn)') +
+    numBox('Verstorben', data.total.verstorben, 'var(--mu)') +
+    numBox('Euthanasiert', data.total.euthanasiert, 'var(--orn)');
+  renderStatChart('alle-statchart', data.total);
+  renderOrtAccordion('alle-ort-acc', data.cities);
 }
 
 // --- Export "Meine Tauben"-Statistik (CSV/Excel + PDF) ---
 function getMeineOrtRows() {
-  var groups = ortGroups(DB.pigeons);
-  var rows = Object.keys(groups).map(function(city) {
-    var c = taubenStatusCounts(groups[city]);
+  var cityCounts = cityCountsFromList(DB.pigeons);
+  var rows = Object.keys(cityCounts).map(function(city) {
+    var c = cityCounts[city];
     return {Ort: city, Gesamt: c.gesamt, Ausgewildert: c.ausgewildert, Verstorben: c.verstorben, Euthanasiert: c.euthanasiert};
   });
   var total = taubenStatusCounts(DB.pigeons);
@@ -2155,7 +2212,7 @@ function saveNote() {
     if (idx>=0) DB.notes[idx] = Object.assign({}, DB.notes[idx], d);
     toast('✅ Notiz aktualisiert!');
   } else {
-    d.id = Date.now().toString();
+    d.id = genId();
     d.created = new Date().toISOString();
     DB.notes.push(d);
     toast('📝 Notiz gespeichert!');
@@ -2933,18 +2990,22 @@ function loginUser(u) {
   finishLogin(u);
 }
 
-function finishLogin(u) {
+async function finishLogin(u) {
   CUR_USER = u;
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('force-pw-screen').classList.add('hidden');
-  loadDB();
   document.getElementById('acc-name').textContent = u.name;
+  if (window.applyFabPosition) applyFabPosition();
   var avImg = document.getElementById('acc-av-img');
   var avEmoji = document.getElementById('acc-av-emoji');
   if (u.photo) { avImg.src=u.photo; avImg.style.display='block'; avEmoji.style.display='none'; }
   else { avImg.style.display='none'; avEmoji.style.display='block'; avEmoji.textContent=u.name.charAt(0).toUpperCase(); }
   updateNavForUser();
   setTimeout(checkUnreadMessages, 400);
+  // Erst die Daten vollständig laden (zeigt währenddessen das Lade-Overlay aus loadDB()),
+  // dann erst rendern – sonst zeigt die Startseite kurz 0 Tauben/Einträge an,
+  // weil DB zu diesem Zeitpunkt noch leer ist.
+  await loadDB();
   if (isAdmin(u)) {
     goPage('home', document.querySelector('.ni'));
   }
@@ -3312,7 +3373,7 @@ async function loadUsers() {
       photo: row.avatar_url || row.photo || '',
       role:  row.role || 'user',
       email: row.email || '',
-      project: row.project || '', // NEU: Projektzugehörigkeit
+      project: row.project || '', // Projektzugehörigkeit
       must_change_pw: !!row.must_change_pw
     }));
   } catch (e) {
@@ -3416,6 +3477,12 @@ async function loadDB() {
   hideLoading();
 }
 
+// Kette aller bisherigen/laufenden Speichervorgänge. Dient dazu, dass
+// deletePigeon/deleteLog/deleteNote (weiter unten) vor dem eigentlichen
+// Löschen abwarten können, bis ein evtl. noch laufendes Speichern (z.B. das
+// Anlegen genau dieses Datensatzes) bei Supabase abgeschlossen ist.
+let _saveQueue = Promise.resolve();
+
 async function saveDB() {
   if (!SB_USER) {
     // Fallback localStorage
@@ -3423,8 +3490,13 @@ async function saveDB() {
     return;
   }
   const uid = SB_USER.id;
-  // Wir speichern im Hintergrund – kein await um UI nicht zu blockieren
-  _saveDBAsync(uid).catch(e => console.warn('saveDB Fehler:', e.message));
+  // Wir speichern im Hintergrund – der Aufrufer muss nicht awaiten, damit die UI
+  // nicht blockiert wird. Die eigentlichen Netzwerk-Schreibvorgänge werden aber
+  // seriell verkettet (nie parallel/überlappend), damit z.B. das Anlegen und ein
+  // direkt darauf folgendes Löschen derselben Taube nicht in falscher Reihenfolge
+  // bei Supabase ankommen.
+  _saveQueue = _saveQueue.then(() => _saveDBAsync(uid)).catch(e => console.warn('saveDB Fehler:', e.message));
+  return _saveQueue;
 }
 
 async function _saveDBAsync(uid) {
@@ -3619,11 +3691,14 @@ async function onAuthSuccess(user) {
 const _origDeletePigeon = deletePigeon;
 async function deletePigeon(id) {
   if (!confirm('Taube wirklich löschen? Alle zugehörigen Einträge bleiben erhalten.')) return;
+  const target = DB.pigeons.find(p => p.id === id);
+  const realId = (target && target._sbId) || id; // falls die Taube noch nicht final synchronisiert war
   DB.pigeons = DB.pigeons.filter(p => p.id !== id);
   cs('sh-detail'); renderPigeons(''); renderHome();
   toast('Taube gelöscht');
   if (SB_USER) {
-    const { error } = await sb.from('pigeons').delete().eq('id', id);
+    await _saveQueue.catch(() => {}); // erst warten, bis ein evtl. noch laufendes Speichern (z.B. das Anlegen) fertig ist
+    const { error } = await sb.from('pigeons').delete().eq('id', realId);
     if (error) console.warn('deletePigeon:', error.message);
   }
 }
@@ -3632,11 +3707,14 @@ async function deletePigeon(id) {
 const _origDeleteLog = deleteLog;
 async function deleteLog(id) {
   if (!confirm('Eintrag wirklich löschen?')) return;
+  const target = DB.logs.find(l => l.id === id);
+  const realId = (target && target._sbId) || id;
   DB.logs = DB.logs.filter(l => l.id !== id);
   renderLogs(); renderHome();
   toast('Eintrag gelöscht');
   if (SB_USER) {
-    await sb.from('logs').delete().eq('id', id);
+    await _saveQueue.catch(() => {});
+    await sb.from('logs').delete().eq('id', realId);
   }
 }
 
@@ -3644,10 +3722,13 @@ async function deleteLog(id) {
 const _origDeleteNote = deleteNote;
 async function deleteNote(id) {
   if (!confirm('Notiz wirklich löschen?')) return;
+  const target = (DB.notes||[]).find(n => n.id === id);
+  const realId = (target && target._sbId) || id;
   DB.notes = (DB.notes||[]).filter(n => n.id !== id);
   renderNotes(''); toast('Notiz gelöscht');
   if (SB_USER) {
-    await sb.from('notes').delete().eq('id', id);
+    await _saveQueue.catch(() => {});
+    await sb.from('notes').delete().eq('id', realId);
   }
 }
 
@@ -3688,6 +3769,126 @@ async function sbInit() {
     }
   });
 }
+
+// ============================================================
+// FAB – frei positionierbarer Schnellerfassungs-Button
+// ============================================================
+// Jeder User kann den "+"-Button per Drag&Drop an eine für ihn
+// passende Stelle auf dem Bildschirm verschieben. Die Position wird
+// pro Benutzer gespeichert (localStorage, Schlüssel enthält die User-ID)
+// und beim nächsten Login automatisch wieder angewendet.
+(function() {
+  var fab = document.getElementById('fab-btn');
+  if (!fab) return;
+
+  function fabStorageKey() {
+    return 'pd_fabpos_' + ((CUR_USER && CUR_USER.id) ? CUR_USER.id : 'guest');
+  }
+
+  function clampFabPosition(left, top) {
+    var margin = 6;
+    var w = fab.offsetWidth || 56;
+    var h = fab.offsetHeight || 56;
+    // Begrenzung auf den App-Container (max-width 480px), nicht das ganze Browserfenster,
+    // damit der Button auch auf breiten Desktop-Fenstern innerhalb der App bleibt.
+    var bodyRect = document.body.getBoundingClientRect();
+    var minLeft = bodyRect.left + margin;
+    var maxLeft = bodyRect.right - w - margin;
+    var minTop = margin;
+    var maxTop = window.innerHeight - h - margin;
+    left = Math.max(minLeft, Math.min(left, Math.max(minLeft, maxLeft)));
+    top = Math.max(minTop, Math.min(top, Math.max(minTop, maxTop)));
+    return { left: left, top: top };
+  }
+
+  function setFabPosition(left, top, persist) {
+    var pos = clampFabPosition(left, top);
+    fab.style.left = pos.left + 'px';
+    fab.style.top = pos.top + 'px';
+    fab.style.right = 'auto';
+    fab.style.bottom = 'auto';
+    if (persist) {
+      try { localStorage.setItem(fabStorageKey(), JSON.stringify(pos)); } catch(e) {}
+    }
+    return pos;
+  }
+
+  // Lädt die gespeicherte Position des aktuellen Users, falls vorhanden.
+  // Wird u.a. nach dem Login aufgerufen (siehe finishLogin()).
+  window.applyFabPosition = function() {
+    var raw = null;
+    try { raw = localStorage.getItem(fabStorageKey()); } catch(e) {}
+    if (raw) {
+      try {
+        var pos = JSON.parse(raw);
+        if (typeof pos.left === 'number' && typeof pos.top === 'number') {
+          setFabPosition(pos.left, pos.top, false);
+          return;
+        }
+      } catch(e) {}
+    }
+    // Kein gespeicherter Wert für diesen User -> zurück auf Standardposition (CSS unten rechts)
+    fab.style.left = '';
+    fab.style.top = '';
+    fab.style.right = '';
+    fab.style.bottom = '';
+  };
+
+  var dragging = false;
+  var moved = false;
+  var startX = 0, startY = 0, startLeft = 0, startTop = 0;
+  var DRAG_THRESHOLD = 8; // px, ab dieser Bewegung gilt es als Ziehen statt Antippen
+
+  fab.addEventListener('pointerdown', function(e) {
+    dragging = true;
+    moved = false;
+    fab.classList.add('fab-dragging');
+    var rect = fab.getBoundingClientRect();
+    startLeft = rect.left;
+    startTop = rect.top;
+    startX = e.clientX;
+    startY = e.clientY;
+    try { fab.setPointerCapture(e.pointerId); } catch(err) {}
+  });
+
+  fab.addEventListener('pointermove', function(e) {
+    if (!dragging) return;
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+    if (!moved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+      moved = true;
+    }
+    if (moved) {
+      setFabPosition(startLeft + dx, startTop + dy, false);
+    }
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    fab.classList.remove('fab-dragging');
+    try { fab.releasePointerCapture(e.pointerId); } catch(err) {}
+    if (moved) {
+      // Drag beendet -> Endposition dauerhaft für diesen User speichern
+      var rect = fab.getBoundingClientRect();
+      setFabPosition(rect.left, rect.top, true);
+    } else {
+      // Keine nennenswerte Bewegung -> als Tipp/Klick werten und Menü öffnen
+      openSheet('sh-fab');
+    }
+  }
+
+  fab.addEventListener('pointerup', endDrag);
+  fab.addEventListener('pointercancel', endDrag);
+
+  // Bei Größenänderung (z.B. Bildschirmdrehung) Button innerhalb des sichtbaren Bereichs halten
+  window.addEventListener('resize', function() {
+    var rect = fab.getBoundingClientRect();
+    if (rect.left || rect.top) {
+      setFabPosition(rect.left, rect.top, false);
+    }
+  });
+})();
 
 // Starte alles
 // Warte bis CDN-Scripts geladen sind
