@@ -976,6 +976,24 @@ function cancelPigeonForm() {
   setChips('pf-dis', []);
 }
 
+// Erzeugt sofort eine stabile, eindeutige ID (echtes UUID-Format).
+// Wichtig: dadurch muss die ID NICHT mehr nachträglich ausgetauscht werden,
+// nachdem der Datensatz im Hintergrund bei Supabase gespeichert wurde – das
+// hat zuvor zu einem Race-Condition-Bug geführt (siehe deletePigeon/-Log/-Note
+// weiter unten): wurde ein frisch angelegter Datensatz sehr schnell wieder
+// gelöscht, lief der Löschbefehl noch mit der alten Behelfs-ID ins Leere,
+// während die verzögerte "Anlegen"-Anfrage den Datensatz trotzdem dauerhaft
+// in der Datenbank speicherte.
+function genId() {
+  if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+    return window.crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 function savePigeon() {
   var name = document.getElementById('pf-name').value.trim();
   if (!name) { alert('Bitte Name eingeben'); return; }
@@ -1020,7 +1038,7 @@ function savePigeon() {
     if (idx >= 0) DB.pigeons[idx] = Object.assign({}, DB.pigeons[idx], d);
     toast('✅ Profil aktualisiert!');
   } else {
-    d.id = Date.now().toString();
+    d.id = genId();
     d.created = new Date().toISOString();
     DB.pigeons.push(d);
     toast('🕊️ Taube gespeichert!');
@@ -1126,7 +1144,7 @@ function saveLog() {
   var pigId = document.getElementById('lf-pig').value;
   if (!pigId && DB.pigeons.length > 0) { alert('Bitte Taube wählen'); return; }
   var log = {
-    id: Date.now().toString(), pigeonId: pigId, type: CUR_TYPE,
+    pigeonId: pigId, type: CUR_TYPE,
     date: document.getElementById('lf-date').value,
     time: document.getElementById('lf-time').value,
     notes: document.getElementById('lf-notes').value.trim(),
@@ -1170,6 +1188,7 @@ function saveLog() {
     if (idx >= 0) DB.logs[idx] = Object.assign({}, DB.logs[idx], log);
     toast('✅ Eintrag aktualisiert!');
   } else {
+    log.id = genId();
     DB.logs.push(log);
     toast('✅ Eintrag gespeichert!');
   }
@@ -1882,7 +1901,7 @@ function saveNote() {
     if (idx>=0) DB.notes[idx] = Object.assign({}, DB.notes[idx], d);
     toast('✅ Notiz aktualisiert!');
   } else {
-    d.id = Date.now().toString();
+    d.id = genId();
     d.created = new Date().toISOString();
     DB.notes.push(d);
     toast('📝 Notiz gespeichert!');
@@ -2660,11 +2679,10 @@ function loginUser(u) {
   finishLogin(u);
 }
 
-function finishLogin(u) {
+async function finishLogin(u) {
   CUR_USER = u;
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('force-pw-screen').classList.add('hidden');
-  loadDB();
   document.getElementById('acc-name').textContent = u.name;
   var avImg = document.getElementById('acc-av-img');
   var avEmoji = document.getElementById('acc-av-emoji');
@@ -2672,6 +2690,10 @@ function finishLogin(u) {
   else { avImg.style.display='none'; avEmoji.style.display='block'; avEmoji.textContent=u.name.charAt(0).toUpperCase(); }
   updateNavForUser();
   setTimeout(checkUnreadMessages, 400);
+  // Erst die Daten vollständig laden (zeigt währenddessen das Lade-Overlay aus loadDB()),
+  // dann erst rendern – sonst zeigt die Startseite kurz 0 Tauben/Einträge an,
+  // weil DB zu diesem Zeitpunkt noch leer ist.
+  await loadDB();
   if (isAdmin(u)) {
     goPage('home', document.querySelector('.ni'));
   }
@@ -3096,6 +3118,12 @@ async function loadDB() {
   hideLoading();
 }
 
+// Kette aller bisherigen/laufenden Speichervorgänge. Dient dazu, dass
+// deletePigeon/deleteLog/deleteNote (weiter unten) vor dem eigentlichen
+// Löschen abwarten können, bis ein evtl. noch laufendes Speichern (z.B. das
+// Anlegen genau dieses Datensatzes) bei Supabase abgeschlossen ist.
+let _saveQueue = Promise.resolve();
+
 async function saveDB() {
   if (!SB_USER) {
     // Fallback localStorage
@@ -3103,8 +3131,13 @@ async function saveDB() {
     return;
   }
   const uid = SB_USER.id;
-  // Wir speichern im Hintergrund – kein await um UI nicht zu blockieren
-  _saveDBAsync(uid).catch(e => console.warn('saveDB Fehler:', e.message));
+  // Wir speichern im Hintergrund – der Aufrufer muss nicht awaiten, damit die UI
+  // nicht blockiert wird. Die eigentlichen Netzwerk-Schreibvorgänge werden aber
+  // seriell verkettet (nie parallel/überlappend), damit z.B. das Anlegen und ein
+  // direkt darauf folgendes Löschen derselben Taube nicht in falscher Reihenfolge
+  // bei Supabase ankommen.
+  _saveQueue = _saveQueue.then(() => _saveDBAsync(uid)).catch(e => console.warn('saveDB Fehler:', e.message));
+  return _saveQueue;
 }
 
 async function _saveDBAsync(uid) {
@@ -3299,11 +3332,14 @@ async function onAuthSuccess(user) {
 const _origDeletePigeon = deletePigeon;
 async function deletePigeon(id) {
   if (!confirm('Taube wirklich löschen? Alle zugehörigen Einträge bleiben erhalten.')) return;
+  const target = DB.pigeons.find(p => p.id === id);
+  const realId = (target && target._sbId) || id; // falls die Taube noch nicht final synchronisiert war
   DB.pigeons = DB.pigeons.filter(p => p.id !== id);
   cs('sh-detail'); renderPigeons(''); renderHome();
   toast('Taube gelöscht');
   if (SB_USER) {
-    const { error } = await sb.from('pigeons').delete().eq('id', id);
+    await _saveQueue.catch(() => {}); // erst warten, bis ein evtl. noch laufendes Speichern (z.B. das Anlegen) fertig ist
+    const { error } = await sb.from('pigeons').delete().eq('id', realId);
     if (error) console.warn('deletePigeon:', error.message);
   }
 }
@@ -3312,11 +3348,14 @@ async function deletePigeon(id) {
 const _origDeleteLog = deleteLog;
 async function deleteLog(id) {
   if (!confirm('Eintrag wirklich löschen?')) return;
+  const target = DB.logs.find(l => l.id === id);
+  const realId = (target && target._sbId) || id;
   DB.logs = DB.logs.filter(l => l.id !== id);
   renderLogs(); renderHome();
   toast('Eintrag gelöscht');
   if (SB_USER) {
-    await sb.from('logs').delete().eq('id', id);
+    await _saveQueue.catch(() => {});
+    await sb.from('logs').delete().eq('id', realId);
   }
 }
 
@@ -3324,10 +3363,13 @@ async function deleteLog(id) {
 const _origDeleteNote = deleteNote;
 async function deleteNote(id) {
   if (!confirm('Notiz wirklich löschen?')) return;
+  const target = (DB.notes||[]).find(n => n.id === id);
+  const realId = (target && target._sbId) || id;
   DB.notes = (DB.notes||[]).filter(n => n.id !== id);
   renderNotes(''); toast('Notiz gelöscht');
   if (SB_USER) {
-    await sb.from('notes').delete().eq('id', id);
+    await _saveQueue.catch(() => {});
+    await sb.from('notes').delete().eq('id', realId);
   }
 }
 
