@@ -288,15 +288,6 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <div class="scard"><div class="v" id="st-l">0</div><div class="l">Einträge</div></div>
     <div class="scard"><div class="v" id="st-h">—</div><div class="l">Gesundheit</div></div>
   </div>
-  <div id="home-quickaccess">
-  <div class="stitle">⚡ Schnellerfassung</div>
-  <div class="hs">
-    <div class="qcard" onclick="openLog('wiegen')"><div class="qi">⚖️</div><div class="ql">Wiegen</div><div class="qs">Gewicht erfassen</div></div>
-    <div class="qcard" onclick="openLog('fuettern')"><div class="qi">🌾</div><div class="ql">Füttern</div><div class="qs">Futter eintragen</div></div>
-    <div class="qcard" onclick="openLog('tierarzt')"><div class="qi">👨‍⚕️</div><div class="ql">Tierarzt</div><div class="qs">Besuch erfassen</div></div>
-    <div class="qcard" onclick="openLog('medikation')"><div class="qi">💊</div><div class="ql">Medikation</div><div class="qs">Medikament eintragen</div></div>
-  </div>
-  </div>
   <div class="dvd"></div>
 
   <!-- INBOX -->
@@ -598,23 +589,21 @@ select.fi option{background:var(--sur);color:var(--tx)}
   </div>
   <div class="fg"><label class="fl">Eigener Zustand (Freitext)</label><input class="fi" id="pf-health2" placeholder="z.B. post-op, Quarantäne..." type="text"></div>
   <div class="fg"><label class="fl">Symptome</label>
-    <select class="fi" id="pf-symp">
-      <option value="">— wählen —</option>
-      <option>Durchfall</option><option>Atemnot</option>
-      <option>Gefiederproblem</option><option>Lahmen</option>
-      <option>Erbrechen</option><option>Lethargie</option>
-      <option>Fressunlust</option><option>Augenausfluss</option>
-    </select>
+    <div class="chips" id="pf-symp">
+      <div class="chip" onclick="tc(this)">Durchfall</div><div class="chip" onclick="tc(this)">Atemnot</div>
+      <div class="chip" onclick="tc(this)">Gefiederproblem</div><div class="chip" onclick="tc(this)">Lahmen</div>
+      <div class="chip" onclick="tc(this)">Erbrechen</div><div class="chip" onclick="tc(this)">Lethargie</div>
+      <div class="chip" onclick="tc(this)">Fressunlust</div><div class="chip" onclick="tc(this)">Augenausfluss</div>
+    </div>
   </div>
   <div class="fg"><label class="fl">Eigene Symptome</label><input class="fi" id="pf-symp2" placeholder="z.B. Nasenausfluss..." type="text"></div>
   <div class="fg"><label class="fl">Krankheiten / Parasiten</label>
-    <select class="fi" id="pf-dis">
-      <option value="">— wählen —</option>
-      <option>Kokzidien</option><option>Trichomonden</option>
-      <option>Salmonellen</option><option>Tuberkulose</option>
-      <option>Hefen</option><option>Würmer</option>
-      <option>Anflugtrauma</option><option>Federlinge</option>
-    </select>
+    <div class="chips" id="pf-dis">
+      <div class="chip" onclick="tc(this)">Kokzidien</div><div class="chip" onclick="tc(this)">Trichomonden</div>
+      <div class="chip" onclick="tc(this)">Salmonellen</div><div class="chip" onclick="tc(this)">Tuberkulose</div>
+      <div class="chip" onclick="tc(this)">Hefen</div><div class="chip" onclick="tc(this)">Würmer</div>
+      <div class="chip" onclick="tc(this)">Anflugtrauma</div><div class="chip" onclick="tc(this)">Federlinge</div>
+    </div>
   </div>
   <div class="fg"><label class="fl">Eigene Krankheit / Parasit</label><input class="fi" id="pf-dis2" placeholder="z.B. Paramyxovirus..." type="text"></div>
 
@@ -708,13 +697,12 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <!-- FUETTERN -->
   <div id="sec-fuettern" style="display:none">
     <div class="fg"><label class="fl">Futter</label>
-      <select class="fi" id="lf-food">
-        <option value="">— wählen —</option>
-        <option>Zuchtmischung</option><option>Reisemischung</option>
-        <option>Mais</option><option>Erbsen</option>
-        <option>Gerste</option><option>Weizen</option>
-        <option>Hanf</option><option>Pellets</option><option>Breimischung</option>
-      </select>
+      <div class="chips" id="lf-food">
+        <div class="chip" onclick="tc(this)">Zuchtmischung</div><div class="chip" onclick="tc(this)">Reisemischung</div>
+        <div class="chip" onclick="tc(this)">Mais</div><div class="chip" onclick="tc(this)">Erbsen</div>
+        <div class="chip" onclick="tc(this)">Gerste</div><div class="chip" onclick="tc(this)">Weizen</div>
+        <div class="chip" onclick="tc(this)">Hanf</div><div class="chip" onclick="tc(this)">Pellets</div><div class="chip" onclick="tc(this)">Breimischung</div>
+      </div>
     </div>
     <div class="fg"><label class="fl">Eigenes Futter</label><input class="fi" id="lf-food2" placeholder="z.B. Hirse, Sonnenblumenkerne..." type="text"></div>
     <div class="frow">
@@ -722,18 +710,17 @@ select.fi option{background:var(--sur);color:var(--tx)}
       <div class="fg"><label class="fl">Einheit</label><select class="fi" id="lf-unit"><option>Gramm</option><option>ml</option><option>EL</option></select></div>
     </div>
     <div class="fg"><label class="fl">Supplement</label>
-      <select class="fi" id="lf-supp">
-        <option value="">— wählen —</option>
-        <option>Entrobac</option>
-        <option>Korvimin</option>
-        <option>Nekton B</option>
-        <option>Nekton Calcium Pulver</option>
-        <option>Nekton Tonic K</option>
-        <option>Phyto Nephro</option>
-        <option>Prime</option>
-        <option>Tollyamin forte</option>
-        <option>Vitamin ADEC</option>
-      </select>
+      <div class="chips" id="lf-supp">
+        <div class="chip" onclick="tc(this)">Entrobac</div>
+        <div class="chip" onclick="tc(this)">Korvimin</div>
+        <div class="chip" onclick="tc(this)">Nekton B</div>
+        <div class="chip" onclick="tc(this)">Nekton Calcium Pulver</div>
+        <div class="chip" onclick="tc(this)">Nekton Tonic K</div>
+        <div class="chip" onclick="tc(this)">Phyto Nephro</div>
+        <div class="chip" onclick="tc(this)">Prime</div>
+        <div class="chip" onclick="tc(this)">Tollyamin forte</div>
+        <div class="chip" onclick="tc(this)">Vitamin ADEC</div>
+      </div>
     </div>
     <div class="fg"><label class="fl">Eigenes Supplement</label><input class="fi" id="lf-supp2" placeholder="z.B. Apfelessig..." type="text"></div>
   </div>
@@ -761,25 +748,24 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <!-- MEDIKATION -->
   <div id="sec-medikation" style="display:none">
     <div class="fg"><label class="fl">💊 Medikament</label>
-      <select class="fi" id="lf-mname">
-        <option value="">— wählen —</option>
-        <option>Antiworm</option>
-        <option>Appercox Liquid</option>
-        <option>Appercox Tabletten</option>
-        <option>Bepanthen Augen &amp; Nasensalbe</option>
-        <option>Betaisodona Lösung</option>
-        <option>Corneregel Augensalbe</option>
-        <option>Euphrasia Augentropfen</option>
-        <option>Frubiase Calcium</option>
-        <option>Kolloidales Silberspray</option>
-        <option>Manuka Lind Salbe</option>
-        <option>Manuka Lind Spray</option>
-        <option>Nystaderm</option>
-        <option>Sab Simplex Suspension</option>
-        <option>Traumeel vet Salbe</option>
-        <option>Traumeel vet Tabletten</option>
-        <option>Tricho Tabs</option>
-      </select>
+      <div class="chips" id="lf-mname">
+        <div class="chip" onclick="tc(this)">Antiworm</div>
+        <div class="chip" onclick="tc(this)">Appercox Liquid</div>
+        <div class="chip" onclick="tc(this)">Appercox Tabletten</div>
+        <div class="chip" onclick="tc(this)">Bepanthen Augen &amp; Nasensalbe</div>
+        <div class="chip" onclick="tc(this)">Betaisodona Lösung</div>
+        <div class="chip" onclick="tc(this)">Corneregel Augensalbe</div>
+        <div class="chip" onclick="tc(this)">Euphrasia Augentropfen</div>
+        <div class="chip" onclick="tc(this)">Frubiase Calcium</div>
+        <div class="chip" onclick="tc(this)">Kolloidales Silberspray</div>
+        <div class="chip" onclick="tc(this)">Manuka Lind Salbe</div>
+        <div class="chip" onclick="tc(this)">Manuka Lind Spray</div>
+        <div class="chip" onclick="tc(this)">Nystaderm</div>
+        <div class="chip" onclick="tc(this)">Sab Simplex Suspension</div>
+        <div class="chip" onclick="tc(this)">Traumeel vet Salbe</div>
+        <div class="chip" onclick="tc(this)">Traumeel vet Tabletten</div>
+        <div class="chip" onclick="tc(this)">Tricho Tabs</div>
+      </div>
     </div>
     <div class="fg"><label class="fl">Eigenes Medikament</label><input class="fi" id="lf-mname2" placeholder="z.B. Ronidazol, Baytril..." type="text"></div>
     <div class="frow">
@@ -986,8 +972,8 @@ function cancelPigeonForm() {
   if(img2){img2.style.display='none';img2.src='';}
   if(em2) em2.style.display='block';
   if(db2) db2.style.display='none';
-  document.getElementById('pf-symp').value = '';
-  document.getElementById('pf-dis').value = '';
+  setChips('pf-symp', []);
+  setChips('pf-dis', []);
 }
 
 function savePigeon() {
@@ -1011,9 +997,9 @@ function savePigeon() {
     notes: document.getElementById('pf-notes').value.trim(),
     health: document.getElementById('pf-health').value || 'Gesund',
     health2: document.getElementById('pf-health2').value.trim(),
-    symptoms: (function(){ var v = document.getElementById('pf-symp').value; return v ? [v] : []; })(),
+    symptoms: chips('pf-symp'),
     symp2: document.getElementById('pf-symp2').value.trim(),
-    diseases: (function(){ var v = document.getElementById('pf-dis').value; return v ? [v] : []; })(),
+    diseases: chips('pf-dis'),
     dis2: document.getElementById('pf-dis2').value.trim(),
     found: document.getElementById('pf-found').value.trim(),
     foundCity: document.getElementById('pf-found-city').value.trim(),
@@ -1081,8 +1067,8 @@ function editPigeon(id) {
   var delBtn = document.getElementById('pf-photo-del');
   if (ph) { img.src=ph; img.style.display='block'; emoji.style.display='none'; if(delBtn) delBtn.style.display='inline-flex'; }
   else { img.style.display='none'; emoji.style.display='block'; if(delBtn) delBtn.style.display='none'; }
-  document.getElementById('pf-symp').value = (p.symptoms && p.symptoms[0]) || '';
-  document.getElementById('pf-dis').value = (p.diseases && p.diseases[0]) || '';
+  setChips('pf-symp', p.symptoms || []);
+  setChips('pf-dis', p.diseases || []);
   openSheet('sh-pigeon');
 }
 
@@ -1118,11 +1104,13 @@ function openLog(type) {
   document.getElementById('lf-date').value = now.toISOString().split('T')[0];
   document.getElementById('lf-time').value = now.toTimeString().slice(0,5);
   if (!document.getElementById('sh-log').dataset.editId) {
-    var foodSel = document.getElementById('lf-food'); if (foodSel) foodSel.value = '';
+    setChips('lf-food', []);
     var foodTxt = document.getElementById('lf-food2'); if (foodTxt) foodTxt.value = '';
-    var suppSel = document.getElementById('lf-supp'); if (suppSel) suppSel.value = '';
+    setChips('lf-supp', []);
     var suppTxt = document.getElementById('lf-supp2'); if (suppTxt) suppTxt.value = '';
-    var mSel = document.getElementById('lf-mname'); if (mSel) mSel.value = '';
+    setChips('lf-exam', []);
+    var examTxt = document.getElementById('lf-exam2'); if (examTxt) examTxt.value = '';
+    setChips('lf-mname', []);
     var mTxt = document.getElementById('lf-mname2'); if (mTxt) mTxt.value = '';
   }
   openSheet('sh-log');
@@ -1150,13 +1138,11 @@ function saveLog() {
     if (pigId) { var pig = DB.pigeons.find(function(p){return p.id===pigId;}); if (pig) pig.lastWeight = log.weight; }
   }
   if (CUR_TYPE === 'fuettern') {
-    var foodSel = document.getElementById('lf-food').value;
-    log.food = foodSel ? [foodSel] : [];
+    log.food = chips('lf-food');
     log.food2 = document.getElementById('lf-food2').value.trim();
     log.amount = document.getElementById('lf-amount').value;
     log.unit = document.getElementById('lf-unit').value;
-    var suppSel = document.getElementById('lf-supp').value;
-    log.supp = suppSel ? [suppSel] : [];
+    log.supp = chips('lf-supp');
     log.supp2 = document.getElementById('lf-supp2').value.trim();
   }
   if (CUR_TYPE === 'tierarzt') {
@@ -1170,9 +1156,8 @@ function saveLog() {
     log.vet2 = document.getElementById('lf-vet2').value.trim();
   }
   if (CUR_TYPE === 'medikation') {
-    var mnameSel = document.getElementById('lf-mname').value;
-    var mname2 = document.getElementById('lf-mname2').value.trim();
-    log.mname = [mnameSel, mname2].filter(Boolean).join(', ');
+    log.mname = chips('lf-mname');
+    log.mname2 = document.getElementById('lf-mname2').value.trim();
     log.mdose = document.getElementById('lf-mdose').value.trim();
     log.mroute = document.getElementById('lf-mroute').value;
     log.mday = document.getElementById('lf-mday').value;
@@ -1207,15 +1192,11 @@ function editLog(id) {
       document.getElementById('lf-weight2').value = l.weight2 || '';
     }
     if (l.type === 'fuettern') {
-      var fVal = (l.food && l.food[0]) || '';
-      var fSel = document.getElementById('lf-food');
-      fSel.value = Array.from(fSel.options).some(function(o){return o.value===fVal;}) ? fVal : '';
+      setChips('lf-food', l.food || []);
       document.getElementById('lf-food2').value = l.food2 || '';
       document.getElementById('lf-amount').value = l.amount || '';
       document.getElementById('lf-unit').value = l.unit || 'Gramm';
-      var sVal = (l.supp && l.supp[0]) || '';
-      var sSel = document.getElementById('lf-supp');
-      sSel.value = Array.from(sSel.options).some(function(o){return o.value===sVal;}) ? sVal : '';
+      setChips('lf-supp', l.supp || []);
       document.getElementById('lf-supp2').value = l.supp2 || '';
     }
     if (l.type === 'tierarzt') {
@@ -1229,11 +1210,14 @@ function editLog(id) {
       document.getElementById('lf-vet2').value = l.vet2 || '';
     }
     if (l.type === 'medikation') {
-      var mSel = document.getElementById('lf-mname');
-      var mVal = l.mname || '';
-      var isKnown = Array.from(mSel.options).some(function(o){return o.value===mVal;});
-      mSel.value = isKnown ? mVal : '';
-      document.getElementById('lf-mname2').value = isKnown ? '' : mVal;
+      if (Array.isArray(l.mname)) {
+        setChips('lf-mname', l.mname);
+        document.getElementById('lf-mname2').value = l.mname2 || '';
+      } else {
+        // Altdaten (vor Mehrfachauswahl): String in Freitextfeld übernehmen
+        setChips('lf-mname', []);
+        document.getElementById('lf-mname2').value = l.mname || '';
+      }
       document.getElementById('lf-mdose').value = l.mdose || '';
       document.getElementById('lf-mroute').value = l.mroute || '';
       document.getElementById('lf-mday').value = l.mday || '';
@@ -1261,10 +1245,7 @@ function renderHome() {
   document.getElementById('st-h').textContent = sick > 0 ? sick + '⚠️' : '✅';
   var recent = DB.logs.slice().sort(function(a,b){return b.created > a.created ? 1 : -1;}).slice(0,3);
   var el = document.getElementById('home-logs');
-  el.innerHTML = recent.length ? recent.map(logCard).join('') : '<div class="empty"><div class="ei">📋</div><p>Noch keine Einträge.<br>Nutze die Schnellerfassung oben.</p></div>';
-  // Show/hide quick access for admin
-  var qa = document.getElementById('home-quickaccess');
-  if (qa) qa.style.display = (CUR_USER && isAdmin(CUR_USER)) ? 'none' : 'block';
+  el.innerHTML = recent.length ? recent.map(logCard).join('') : '<div class="empty"><div class="ei">📋</div><p>Noch keine Einträge.<br>Nutze das ＋ um einen Eintrag zu erstellen.</p></div>';
   document.getElementById('hdate').textContent = new Date().toLocaleDateString('de-AT',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   var greet = document.getElementById('hero-greeting');
   if (greet) {
@@ -1410,7 +1391,8 @@ function logCard(l) {
   if (l.exam2) f2('Eigene Unters.', l.exam2, true);
   if (l.med) f2('Medikament', l.med + (l.dose ? ' · ' + l.dose : ''));
   if (l.vet2) f2('Anmerkung Tierarzt', l.vet2, true);
-  if (l.mname) f2('Medikament', l.mname, true);
+  if (l.mname && l.mname.length) f2('Medikament', Array.isArray(l.mname) ? l.mname.join(', ') : l.mname, true);
+  if (l.mname2) f2('Eigenes Medikament', l.mname2, true);
   if (l.mdose) f2('Dosierung', l.mdose);
   if (l.mroute) f2('Verabreichung', l.mroute);
   if (l.mday || l.mdur) f2('Behandlungstag', (l.mday||'—') + ' / ' + (l.mdur||'?'));
@@ -1686,7 +1668,7 @@ function renderStats() {
   }
 
   if (CUR_STATS_TAB === 'medikation') {
-    var allMeds = logs.map(function(l){ return {mname:l.mname?[l.mname]:[]}; });
+    var allMeds = logs.map(function(l){ return {mname:(Array.isArray(l.mname)?l.mname:(l.mname?[l.mname]:[])).concat(l.mname2?[l.mname2]:[])}; });
     document.getElementById('stats-med-list').innerHTML = countBarList(countBy(allMeds,'mname'));
     document.getElementById('stats-mlog-list').innerHTML = simpleLogList(
       logs.slice().sort(function(a,b){return b.date>a.date?1:-1;}),
@@ -1733,7 +1715,7 @@ function logsToRows(logs) {
       'Tierarzt': l.vet||'', 'Befund': l.diag||'',
       'Untersuchungen': (l.exam||[]).join(', ')+(l.exam2?', '+l.exam2:''),
       'Medikament Tierarzt': l.med||'', 'Dosis Tierarzt': l.dose||'',
-      'Medikament': l.mname||'', 'Dosierung': l.mdose||'',
+      'Medikament': (Array.isArray(l.mname)?l.mname.join(', '):(l.mname||''))+(l.mname2?', '+l.mname2:''), 'Dosierung': l.mdose||'',
       'Verabreichung': l.mroute||'', 'Behandlungstag': l.mday||'',
       'Behandlungsdauer': l.mdur||'', 'Notizen': l.notes||''
     };
@@ -1982,8 +1964,8 @@ function toast(msg) {
 // HANDBOOKS
 // ============================================================
 var USER_HANDBOOK = [
-  { title: '🏠 Startseite', content: 'Die Startseite begrüßt dich mit deinem Namen und zeigt eine Übersicht: Anzahl deiner Tauben, Einträge und den Gesundheitsstatus. Darunter findest du die Schnellerfassung für häufige Aktionen, deine Postbox für Nachrichten sowie die letzten Einträge.' },
-  { title: '⚡ Schnellerfassung', content: 'Tippe auf eine der vier Kacheln um schnell einen Eintrag zu erstellen:\n• ⚖️ Wiegen – Gewicht einer Taube erfassen\n• 🌾 Füttern – Fütterung mit Futter, Menge & Supplement dokumentieren\n• 👨‍⚕️ Tierarzt – Tierarztbesuch mit Befund & Behandlung erfassen\n• 💊 Medikation – Medikament, Dosierung & Verabreichungsweg eintragen\n\nJe nach Kategorie erscheint ein Formular mit passenden Feldern. Immer Taube, Datum und Uhrzeit angeben.' },
+  { title: '🏠 Startseite', content: 'Die Startseite begrüßt dich mit deinem Namen und zeigt eine Übersicht: Anzahl deiner Tauben, Einträge und den Gesundheitsstatus. Darunter findest du deine Postbox für Nachrichten sowie die letzten Einträge.' },
+  { title: '＋ Eintrag erfassen', content: 'Tippe unten rechts auf das ＋ um schnell einen Eintrag zu erstellen. Im Menü stehen zur Auswahl:\n• 🕊️ Neue Taube anlegen\n• ⚖️ Wiegen – Gewicht einer Taube erfassen\n• 🌾 Füttern – Fütterung mit Futter, Menge & Supplement dokumentieren\n• 👨‍⚕️ Tierarzt – Tierarztbesuch mit Befund & Behandlung erfassen\n• 💊 Medikation – Medikament, Dosierung & Verabreichungsweg eintragen\n\nJe nach Kategorie erscheint ein Formular mit passenden Feldern. Immer Taube, Datum und Uhrzeit angeben.' },
   { title: '✉️ Postbox', content: 'Die Postbox befindet sich auf der Startseite. Tippe auf den ✉️-Bereich um sie aufzuklappen.\n\nUngelesene Nachrichten werden mit einem Badge (Zahl) angezeigt. Tippe auf eine Nachricht um sie vollständig zu lesen und zu beantworten.\n\n• ✏️ Neue Nachricht – Tippe auf "Neue Nachricht schreiben" um einem anderen User zu schreiben\n• ↩️ Antworten – Direkt aus der Nachrichtenansicht antworten\n• 🗑️ Löschen – Nachricht "Für mich" oder "Für alle" löschen' },
   { title: '🕊️ Tauben', content: 'Hier verwaltest du alle deine Pflegetauben.\n\nNeue Taube anlegen: Tippe auf das ＋ um eine neue Taube anzulegen. Felder:\n• Name, Ringnummer, Rasse, Geschlecht, Jahrgang, Farbe\n• Unterbringung (Box, Voliere, Schlag oder Freitext)\n• 📷 Profilfoto der Taube\n• 🏥 Gesundheit: Zustand, Symptome, Krankheiten/Parasiten\n• 📍 Fundort & Aufnahmedatum\n• Auswilderungs- und Eutha nasiedaten\n\nProfile sind nach Gesundheitszustand in Reiter eingeteilt: Alle · Gesund · Krank · Verstorben · Euthanasiert.\n\nTaube antippen → Detailansicht mit allen Infos, Einträgen und Buttons für Bearbeiten, Wiegen und Löschen.' },
   { title: '📒 Tagebuch', content: 'Das Tagebuch zeigt alle Einträge chronologisch. Filter:\n• Taube: Dropdown oben – alle oder einzelne Taube\n• Typ: Reiter Alle / Gewicht / Futter / Tierarzt / Medikation\n• Sortierung: 🔽 Neueste zuerst / 🔼 Älteste zuerst\n\nJeden Eintrag kannst du ✏️ bearbeiten oder 🗑️ löschen.\n\nExport: 📊 Excel/CSV oder 📄 PDF – im PDF-Kopf erscheint das vollständige Taubenprofil.' },
@@ -1995,7 +1977,7 @@ var USER_HANDBOOK = [
 
 var ADMIN_HANDBOOK = [
   { title: '👑 Administratorprofil', content: 'Das erste angelegte Profil ist automatisch Administrator. Der Admin hat erweiterte Rechte gegenüber normalen Usern:\n\n• Alle Userprofile sehen und verwalten\n• Neue Profile anlegen\n• Profile anderer User löschen (auch PIN-geschützte)\n• Nachrichten an alle oder einzelne User senden\n• Zugriff auf alle Profile ohne PIN-Eingabe\n• Umfassende Statistiken aller User einsehen' },
-  { title: '🏠 Startseite (Admin)', content: 'Die Startseite des Admins ist reduziert: Es gibt keine Schnellerfassung (Wiegen, Füttern etc.), da der Admin keine eigenen Tauben verwaltet.\n\nSichtbar:\n• Begrüßung mit Profilname\n• Postbox für Nachrichten\n• Letzte Einträge (falls vorhanden)' },
+  { title: '🏠 Startseite (Admin)', content: 'Die Startseite des Admins ist reduziert, da der Admin keine eigenen Tauben verwaltet.\n\nSichtbar:\n• Begrüßung mit Profilname\n• Postbox für Nachrichten\n• Letzte Einträge (falls vorhanden)' },
   { title: '👑 Admin-Bereich', content: 'Der Admin-Bereich ist über die untere Navigation erreichbar (👑 Admin).\n\nDrei Reiter:\n\n👥 User – Liste aller Profile mit Tauben- und Einträgezähler, Löschen-Button pro User, ＋ Neues Profil anlegen\n\n✉️ Nachrichten – Nachrichten an einzelne User oder alle senden, Verlauf gesendeter Nachrichten\n\n📊 Übersicht – wird in Statistik gezeigt (siehe unten)' },
   { title: '📊 Statistik (Admin)', content: 'Die Admin-Statistik bietet zwei Filter:\n\n1️⃣ Benutzer wählen – Zeigt Einträge eines bestimmten Users\n2️⃣ Taube wählen – Filtert zusätzlich auf eine einzelne Taube des Users\n\nEinträge-Zähler (reine Zahlen):\n• Gesamt · ⚖️ Gewicht · 🌾 Füttern · 👨‍⚕️ Tierarzt · 💊 Medikation\n\nTauben-Übersicht (userübergreifend):\n• Alle · Gesund · Krank · Verstorben · Euthanasiert\n• Aufschlüsselung Krankheiten/Parasiten bei "Krank"\n• Todesursachen bei "Verstorben"\n• Euthanasie-Gründe bei "Euthanasiert"' },
   { title: '👥 Userverwaltung', content: 'Erreichbar über 👑 Admin → Reiter "👥 User".\n\nNeues Profil anlegen:\n• Tippe auf ＋ Neues Profil anlegen\n• Name, optionales Profilfoto, 4-stelliger PIN (optional)\n• Checkbox "Als Admin anlegen" für weitere Admins\n• Das erste Profil wird immer automatisch Admin\n\nProfil löschen:\n• ✕-Button auf der Profilkachel in der Benutzerauswahl (nur wenn Admin eingeloggt)\n• 🗑️ Löschen-Button in der User-Liste im Admin-Bereich\n• Löscht Profil und ALLE zugehörigen Daten unwiderruflich' },
