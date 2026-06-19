@@ -446,7 +446,6 @@ select.fi option{background:var(--sur);color:var(--tx)}
         <div class="cwrap"><div class="ctit">Häufigste Medikamente</div><div id="stats-med-list"></div></div>
         <div class="cwrap"><div class="ctit">Alle Medikationseinträge</div><div id="stats-mlog-list"></div></div>
       </div>
-      <div id="health-ov"></div>
 
       <div class="dvd"></div>
       <div class="cwrap">
@@ -1787,15 +1786,6 @@ function renderStats() {
       [{key:'mname',label:'Medikament'},{key:'mdose',label:'Dosierung'},{key:'mroute',label:'Verabreichung'},{key:'mday',label:'Tag'},{key:'mdur',label:'Dauer'}]
     );
   }
-
-  // Health overview always shown
-  var hc = {};
-  DB.pigeons.forEach(function(p){var h=p.health||'Gesund';hc[h]=(hc[h]||0)+1;});
-  var ho = document.getElementById('health-ov');
-  ho.innerHTML = '<div class="stitle" style="font-size:16px;margin-top:20px">🏥 Gesundheitsübersicht</div>' +
-    (Object.keys(hc).length ? Object.keys(hc).map(function(h){
-      return '<div class="hrow" style="cursor:default"><div class="hinfo"><div class="ht">'+h+'</div></div><div class="badge '+badgeClass(h)+'">'+hc[h]+' Taube'+(hc[h]>1?'n':'')+'</div></div>';
-    }).join('') : '<div class="empty"><div class="ei">🏥</div><p>Keine Daten</p></div>');
 }
 
 // ============================================================
@@ -2299,7 +2289,7 @@ var USER_HANDBOOK = [
   { title: '✉️ Postbox', content: 'Die Postbox befindet sich auf der Startseite. Tippe auf den ✉️-Bereich um sie aufzuklappen.\n\nUngelesene Nachrichten werden mit einem Badge (Zahl) angezeigt. Tippe auf eine Nachricht um sie vollständig zu lesen und zu beantworten.\n\n• ✏️ Neue Nachricht – Tippe auf "Neue Nachricht schreiben" um einem anderen User zu schreiben\n• ↩️ Antworten – Direkt aus der Nachrichtenansicht antworten\n• 🗑️ Löschen – Nachricht "Für mich" oder "Für alle" löschen' },
   { title: '🕊️ Tauben', content: 'Hier verwaltest du alle deine Pflegetauben.\n\nNeue Taube anlegen: Tippe auf das ＋ um eine neue Taube anzulegen. Felder:\n• Name, Ringnummer, Rasse, Geschlecht, Jahrgang, Farbe\n• Unterbringung (Box, Voliere, Schlag oder Freitext)\n• 📷 Profilfoto der Taube\n• 🏥 Gesundheit: Zustand, Symptome, Krankheiten/Parasiten\n• 📍 Fundort & Aufnahmedatum\n• Auswilderungs- und Eutha nasiedaten\n\nProfile sind nach Gesundheitszustand in Reiter eingeteilt: Alle · Gesund · Krank · Verstorben · Euthanasiert.\n\nTaube antippen → Detailansicht mit allen Infos, Einträgen und Buttons für Bearbeiten, Wiegen und Löschen.' },
   { title: '📒 Tagebuch', content: 'Das Tagebuch zeigt alle Einträge chronologisch. Filter:\n• Taube: Dropdown oben – alle oder einzelne Taube\n• Typ: Reiter Alle / Gewicht / Futter / Tierarzt / Medikation\n• Sortierung: 🔽 Neueste zuerst / 🔼 Älteste zuerst\n\nJeden Eintrag kannst du ✏️ bearbeiten oder 🗑️ löschen.\n\nExport: 📊 Excel/CSV oder 📄 PDF – im PDF-Kopf erscheint das vollständige Taubenprofil.' },
-  { title: '📊 Statistik', content: 'Die Statistik wertet deine Einträge grafisch aus. Wähle oben eine Taube als Filter.\n\nReiter:\n• ⚖️ Wiegen – Gewichtsbalkendiagramm der letzten 10 Messungen + vollständige Liste\n• 🌾 Füttern – Fütterungen pro Tag, häufigste Futtersorten und Supplements\n• 👨‍⚕️ Tierarzt – Besuche pro Monat + alle Einträge\n• 💊 Medikation – häufigste Medikamente + alle Einträge\n\nAm Ende: Gesundheitsübersicht aller Tauben.' },
+  { title: '📊 Statistik', content: 'Die Statistik wertet deine Einträge grafisch aus. Wähle oben eine Taube als Filter.\n\nReiter:\n• ⚖️ Wiegen – Gewichtsbalkendiagramm der letzten 10 Messungen + vollständige Liste\n• 🌾 Füttern – Fütterungen pro Tag, häufigste Futtersorten und Supplements\n• 👨‍⚕️ Tierarzt – Besuche pro Monat + alle Einträge\n• 💊 Medikation – häufigste Medikamente + alle Einträge\n\nDarunter: Balkendiagramm Gesamt/Ausgewildert/Verstorben/Euthanasiert sowie Aufschlüsselung nach Ort der Sicherung.' },
   { title: '📝 Notizen', content: 'Hier kannst du eigene Notizen anlegen – unabhängig von Tauben und Einträgen.\n\nNeue Notiz: ＋ Neu Tippen.\n\nFelder:\n• Titel (optional)\n• Kategorie: Behandlung, Beobachtung, Erinnerung, Tierarzt, Fütterung, Sonstiges\n• Notiztext (Freitext)\n• Verknüpfte Taube (optional)\n• Datum\n\nNotizen sind durchsuchbar und können bearbeitet und gelöscht werden.' },
   { title: '⚙️ Einstellungen', content: '• 📤 Daten exportieren – Backup als JSON-Datei speichern\n• 📥 Daten importieren – Backup zurückspielen (zusammenführen oder ersetzen)\n• 🗑️ Alle Daten löschen – Löscht alle Tauben und Einträge dieses Profils\n• 📖 Benutzerhandbuch – Diese Anleitung\n\nProfilverwaltung (Avatar-Icon oben): PIN ändern, Benutzer wechseln.' },
   { title: '👤 Profilverwaltung', content: 'Tippe oben rechts auf deinen Avatar-Button um das Profilmenü zu öffnen.\n\n• 🔒 PIN einrichten / ändern – Sichert deinen Account mit 4-stelligem PIN\n• 🔓 PIN entfernen – Account ohne PIN nutzen\n• 🚪 Benutzer wechseln – Zurück zur Profilauswahl\n• 🗑️ Profil löschen – Löscht deinen Account und alle Daten unwiderruflich' },
@@ -3834,48 +3824,68 @@ async function sbInit() {
     fab.style.bottom = '';
   };
 
-  var dragging = false;
-  var moved = false;
+  // UMGEKEHRTE LOGIK (Korrektur): kurzes Antippen -> Menü öffnen.
+  // Erst nach LONG_PRESS_MS gehaltenem Druck (ohne vorheriges Verrutschen)
+  // wechselt der Button in den Verschieben-Modus (sichtbar an .fab-dragging).
+  var LONG_PRESS_MS = 380;  // Haltedauer bis der Verschieben-Modus aktiviert wird
+  var MOVE_CANCEL_PX = 8;   // Bewegung VOR Ablauf der Haltezeit gilt als verrutscht -> Geste abbrechen
+
+  var pressTimer = null;
+  var dragModeActive = false;
+  var aborted = false;
   var startX = 0, startY = 0, startLeft = 0, startTop = 0;
-  var DRAG_THRESHOLD = 8; // px, ab dieser Bewegung gilt es als Ziehen statt Antippen
+
+  function clearPressTimer() {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  }
 
   fab.addEventListener('pointerdown', function(e) {
-    dragging = true;
-    moved = false;
-    fab.classList.add('fab-dragging');
+    dragModeActive = false;
+    aborted = false;
     var rect = fab.getBoundingClientRect();
     startLeft = rect.left;
     startTop = rect.top;
     startX = e.clientX;
     startY = e.clientY;
     try { fab.setPointerCapture(e.pointerId); } catch(err) {}
+
+    clearPressTimer();
+    pressTimer = setTimeout(function() {
+      // Lange genug gehalten und bisher kaum Bewegung -> jetzt verschiebbar
+      dragModeActive = true;
+      fab.classList.add('fab-dragging');
+    }, LONG_PRESS_MS);
   });
 
   fab.addEventListener('pointermove', function(e) {
-    if (!dragging) return;
     var dx = e.clientX - startX;
     var dy = e.clientY - startY;
-    if (!moved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
-      moved = true;
-    }
-    if (moved) {
+    if (dragModeActive) {
       setFabPosition(startLeft + dx, startTop + dy, false);
+      return;
+    }
+    // Noch in der Haltephase: zu viel Bewegung vor Ablauf der Haltezeit -> Geste abbrechen
+    // (verhindert, dass ein leicht verrutschter Finger versehentlich das Menü öffnet)
+    if (!aborted && (Math.abs(dx) > MOVE_CANCEL_PX || Math.abs(dy) > MOVE_CANCEL_PX)) {
+      aborted = true;
+      clearPressTimer();
     }
   });
 
   function endDrag(e) {
-    if (!dragging) return;
-    dragging = false;
-    fab.classList.remove('fab-dragging');
+    clearPressTimer();
     try { fab.releasePointerCapture(e.pointerId); } catch(err) {}
-    if (moved) {
-      // Drag beendet -> Endposition dauerhaft für diesen User speichern
+    if (dragModeActive) {
+      // Verschieben beendet -> Endposition dauerhaft für diesen User speichern
+      fab.classList.remove('fab-dragging');
       var rect = fab.getBoundingClientRect();
       setFabPosition(rect.left, rect.top, true);
-    } else {
-      // Keine nennenswerte Bewegung -> als Tipp/Klick werten und Menü öffnen
+    } else if (!aborted) {
+      // Kurzes Antippen ohne nennenswerte Bewegung -> Erfassungsmenü öffnen
       openSheet('sh-fab');
     }
+    dragModeActive = false;
+    aborted = false;
   }
 
   fab.addEventListener('pointerup', endDrag);
