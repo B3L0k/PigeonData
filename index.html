@@ -418,6 +418,20 @@ select.fi option{background:var(--sur);color:var(--tx)}
 
     <!-- SCOPE: MEINE TAUBEN -->
     <div id="stats-scope-meine">
+      <div class="cwrap">
+        <div class="ctit">🕊️ Übersicht — Gesamt, Ausgewildert, Verstorben, Euthanasiert</div>
+        <div class="statchart" id="meine-statchart"></div>
+      </div>
+      <div class="cwrap">
+        <div class="ctit">📍 Aufschlüsselung nach Ort der Sicherung</div>
+        <div id="meine-ort-acc"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:18px">
+        <button class="bexport" onclick="exportMeineOrtStatsCSV()">📊 Excel/CSV</button>
+        <button class="bexport" onclick="exportMeineOrtStatsPDF()">📄 PDF</button>
+      </div>
+      <div class="dvd"></div>
+
       <div class="fg" style="margin-bottom:14px">
         <select class="fi" id="stats-pig-filter" onchange="renderStats()">
           <option value="">— Alle Tauben —</option>
@@ -445,20 +459,6 @@ select.fi option{background:var(--sur);color:var(--tx)}
       <div id="stats-medikation" style="display:none">
         <div class="cwrap"><div class="ctit">Häufigste Medikamente</div><div id="stats-med-list"></div></div>
         <div class="cwrap"><div class="ctit">Alle Medikationseinträge</div><div id="stats-mlog-list"></div></div>
-      </div>
-
-      <div class="dvd"></div>
-      <div class="cwrap">
-        <div class="ctit">🕊️ Übersicht — Gesamt, Ausgewildert, Verstorben, Euthanasiert</div>
-        <div class="statchart" id="meine-statchart"></div>
-      </div>
-      <div class="cwrap">
-        <div class="ctit">📍 Aufschlüsselung nach Ort der Sicherung</div>
-        <div id="meine-ort-acc"></div>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:24px">
-        <button class="bexport" onclick="exportMeineOrtStatsCSV()">📊 Excel/CSV</button>
-        <button class="bexport" onclick="exportMeineOrtStatsPDF()">📄 PDF</button>
       </div>
     </div>
 
@@ -3824,15 +3824,15 @@ async function sbInit() {
     fab.style.bottom = '';
   };
 
-  // UMGEKEHRTE LOGIK (Korrektur): kurzes Antippen -> Menü öffnen.
-  // Erst nach LONG_PRESS_MS gehaltenem Druck (ohne vorheriges Verrutschen)
-  // wechselt der Button in den Verschieben-Modus (sichtbar an .fab-dragging).
+  // Kurzes Antippen -> Menü öffnen (per nativem "click", s.u.).
+  // Erst nach LONG_PRESS_MS gehaltenem Druck wechselt der Button in den
+  // Verschieben-Modus (sichtbar an .fab-dragging).
   var LONG_PRESS_MS = 380;  // Haltedauer bis der Verschieben-Modus aktiviert wird
-  var MOVE_CANCEL_PX = 8;   // Bewegung VOR Ablauf der Haltezeit gilt als verrutscht -> Geste abbrechen
+  var MOVE_CANCEL_PX = 8;   // Bewegung VOR Ablauf der Haltezeit -> Haltezeit wird abgebrochen
 
   var pressTimer = null;
   var dragModeActive = false;
-  var aborted = false;
+  var suppressNextClick = false; // verhindert, dass der click direkt nach einer Drag-Geste das Menü öffnet
   var startX = 0, startY = 0, startLeft = 0, startTop = 0;
 
   function clearPressTimer() {
@@ -3841,7 +3841,6 @@ async function sbInit() {
 
   fab.addEventListener('pointerdown', function(e) {
     dragModeActive = false;
-    aborted = false;
     var rect = fab.getBoundingClientRect();
     startLeft = rect.left;
     startTop = rect.top;
@@ -3851,28 +3850,26 @@ async function sbInit() {
 
     clearPressTimer();
     pressTimer = setTimeout(function() {
-      // Lange genug gehalten und bisher kaum Bewegung -> jetzt verschiebbar
+      // Lange genug gehalten -> jetzt verschiebbar
       dragModeActive = true;
       fab.classList.add('fab-dragging');
     }, LONG_PRESS_MS);
   });
 
   fab.addEventListener('pointermove', function(e) {
-    var dx = e.clientX - startX;
-    var dy = e.clientY - startY;
     if (dragModeActive) {
-      setFabPosition(startLeft + dx, startTop + dy, false);
+      setFabPosition(startLeft + (e.clientX - startX), startTop + (e.clientY - startY), false);
       return;
     }
-    // Noch in der Haltephase: zu viel Bewegung vor Ablauf der Haltezeit -> Geste abbrechen
-    // (verhindert, dass ein leicht verrutschter Finger versehentlich das Menü öffnet)
-    if (!aborted && (Math.abs(dx) > MOVE_CANCEL_PX || Math.abs(dy) > MOVE_CANCEL_PX)) {
-      aborted = true;
+    var dx = e.clientX - startX, dy = e.clientY - startY;
+    if (Math.abs(dx) > MOVE_CANCEL_PX || Math.abs(dy) > MOVE_CANCEL_PX) {
+      // Vor Ablauf der Haltezeit bewegt -> Verschieben-Modus wird für diese Geste
+      // nicht mehr aktiviert. Ob es noch als Tipp zählt, entscheidet der click-Event.
       clearPressTimer();
     }
   });
 
-  function endDrag(e) {
+  function finalizeFabGesture(e) {
     clearPressTimer();
     try { fab.releasePointerCapture(e.pointerId); } catch(err) {}
     if (dragModeActive) {
@@ -3880,16 +3877,22 @@ async function sbInit() {
       fab.classList.remove('fab-dragging');
       var rect = fab.getBoundingClientRect();
       setFabPosition(rect.left, rect.top, true);
-    } else if (!aborted) {
-      // Kurzes Antippen ohne nennenswerte Bewegung -> Erfassungsmenü öffnen
-      openSheet('sh-fab');
+      suppressNextClick = true;
     }
     dragModeActive = false;
-    aborted = false;
   }
 
-  fab.addEventListener('pointerup', endDrag);
-  fab.addEventListener('pointercancel', endDrag);
+  fab.addEventListener('pointerup', finalizeFabGesture);
+  fab.addEventListener('pointercancel', finalizeFabGesture);
+
+  // Öffnet das Erfassungsmenü über den nativen "click"-Event statt über eigene
+  // Zeit-/Bewegungsmessung. Der Browser löst click bei Maus UND Touch zuverlässig
+  // nur nach einem echten Tipp/Klick aus (nicht nach einer Drag-Geste) — das war
+  // mit einer rein selbstgebauten Pointer-Auswertung auf Touchscreens unzuverlässig.
+  fab.addEventListener('click', function(e) {
+    if (suppressNextClick) { suppressNextClick = false; return; }
+    openSheet('sh-fab');
+  });
 
   // Bei Größenänderung (z.B. Bildschirmdrehung) Button innerhalb des sichtbaren Bereichs halten
   window.addEventListener('resize', function() {
