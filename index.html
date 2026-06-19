@@ -3127,7 +3127,9 @@ async function saveDB() {
 
 async function _saveDBAsync(uid) {
   // ── Tauben ─────────────────────────────────────────────────
+  const idMap = {}; // FIX: merkt sich alte ID -> neue Supabase-UUID je Taube
   for (const p of DB.pigeons) {
+    const oldId = p.id; // FIX: alte ID sichern, bevor sie ggf. ersetzt wird
     const row = {
       id:            p._sbId || p.id,
       owner_id:      uid,
@@ -3148,14 +3150,16 @@ async function _saveDBAsync(uid) {
       if (!error && data) {
         p._sbId = data.id;
         p.id    = data.id;
+        idMap[oldId] = data.id; // FIX: Zuordnung alte->neue ID merken
       }
     } else {
       await sb.from('pigeons').upsert(row, { onConflict: 'id' });
     }
   }
 
-  // ── Logs ───────────────────────────────────────────────────
+  // ── Logs ─────────────────────────────────────────────────
   for (const l of DB.logs) {
+    if (idMap[l.pigeonId]) l.pigeonId = idMap[l.pigeonId]; // FIX: Verweis auf neue UUID nachziehen
     const row = {
       id:        l._sbId || l.id,
       user_id:   uid,
@@ -3176,8 +3180,9 @@ async function _saveDBAsync(uid) {
     }
   }
 
-  // ── Notes ──────────────────────────────────────────────────
+  // ── Notes ───────────────────────────────────────────
   for (const n of DB.notes) {
+    if (idMap[n.pigeonId]) n.pigeonId = idMap[n.pigeonId]; // FIX: Verweis auf neue UUID nachziehen
     const row = {
       id:         n._sbId || n.id,
       user_id:    uid,
