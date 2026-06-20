@@ -1076,6 +1076,8 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="hrow" onclick="clearAll()"><div class="hi">🗑️</div><div class="hinfo"><div class="ht">Alle Daten löschen</div><div class="hs2">Nicht rückgängig machbar</div></div></div>
   <div class="dvd"></div>
   <div class="hrow" onclick="openHandbook()"><div class="hi">📖</div><div class="hinfo"><div class="ht">Benutzerhandbuch</div><div class="hs2">Anleitung und Funktionsübersicht</div></div><div class="ibtn">→</div></div>
+  <div class="hrow" onclick="openHandbuch()"><div class="hi">📘</div><div class="hinfo"><div class="ht">Päppel Handout</div><div class="hs2">PDF öffnen</div></div><div class="ibtn">→</div></div>
+  <div class="hrow" onclick="resetTreatmentInfoHints()"><div class="hi">🔄</div><div class="hinfo"><div class="ht">Behandlungs-Hinweise zurücksetzen</div><div class="hs2">Ausgeblendete Infofenster wieder einblenden</div></div></div>
   <div class="dvd"></div>
   <p style="color:var(--mu);font-size:13px;text-align:center">PigeonData v2.0<br>Alle Daten lokal gespeichert</p>
  </div>
@@ -1710,7 +1712,6 @@ function showDetail(id) {
     '<div class="stitle" style="font-size:16px">📋 Einträge (' + logs.length + ')</div>' +
     (logs.length ? logs.slice(0,5).map(logCard).join('') : '<div class="empty"><div class="ei">📋</div><p>Noch keine Einträge</p></div>') +
     '<button class="btn1" style="margin-top:4px" onclick="cs(\'sh-detail\');editPigeon(\'' + p.id + '\')">✏️ Profil bearbeiten</button>' +
-    '<button class="btn2" onclick="cs(\'sh-detail\');openLog(\'wiegen\');setTimeout(function(){document.getElementById(\'lf-pig\').value=\'' + p.id + '\';},80)">⚖️ Wiegen</button>' +
     '<button class="btn2" onclick="toggleArchivePigeon(\'' + p.id + '\')">' + (p.archived ? '📤 Aus Archiv zurückholen' : '📦 Archivieren') + '</button>' +
     '<button class="btnX" onclick="deletePigeon(\'' + p.id + '\')">🗑️ Taube löschen</button>';
   openSheet('sh-detail');
@@ -2099,7 +2100,7 @@ function ownerNameForPigeon(p) {
 
 function pigeonRowsForExport(list) {
   return list.map(function(p) {
-    return { Name: p.name, Ring: p.ring||'', Status: p.health||'Gesund', Stadt: p.foundCity||'', Taubenschlag: p.foundLoft||'', Besitzer: ownerNameForPigeon(p) };
+    return { Name: p.name, Ring: p.ring||'', Status: p.health||'Gesund', Stadt: p.foundCity||'', Taubenschlag: p.foundLoft||'' };
   });
 }
 
@@ -2112,7 +2113,7 @@ function pigListHtml(list) {
         '<span style="font-weight:600;font-size:13px">'+p.name+(p.ring?' <span style="color:var(--mu);font-weight:400">('+p.ring+')</span>':'')+'</span>'+
         '<span class="badge" style="background:'+col+'22;color:'+col+'">'+(p.health||'Gesund')+'</span>'+
       '</div>'+
-      '<div style="font-size:12px;color:var(--mu);margin-top:2px">👤 '+ownerNameForPigeon(p)+(p.foundCity?' · 🏙️ '+p.foundCity:'')+(p.foundLoft?' · 🏠 '+p.foundLoft:'')+'</div>'+
+      '<div style="font-size:12px;color:var(--mu);margin-top:2px">'+(p.foundCity?'🏙️ '+p.foundCity:'')+(p.foundLoft?' · 🏠 '+p.foundLoft:'')+'</div>'+
     '</div>';
   }).join('') + '</div>';
 }
@@ -4046,8 +4047,6 @@ function openUserSettings() {
     '<div class="hrow" onclick="openChangePasswordSheet()"><div class="hi">🔑</div><div class="hinfo"><div class="ht">Passwort ändern</div><div class="hs2">Eigenes Passwort aktualisieren</div></div></div>'+
     (isAdmin(CUR_USER)?'<div class="hrow" onclick="adminCreateUser()"><div class="hi">➕</div><div class="hinfo"><div class="ht">Neuen Benutzer anlegen</div><div class="hs2">Benutzername, E-Mail & vorl. Passwort vergeben</div></div></div>':'')+
     '<div class="hrow" onclick="exportOwnBackup()"><div class="hi">💾</div><div class="hinfo"><div class="ht">Datensicherung</div><div class="hs2">Eigene Daten als Datei exportieren</div></div></div>'+
-    '<div class="hrow" onclick="openHandbuch()"><div class="hi">📘</div><div class="hinfo"><div class="ht">Benutzerhandbuch</div><div class="hs2">Päppel-Handout als PDF öffnen</div></div></div>'+
-    '<div class="hrow" onclick="resetTreatmentInfoHints()"><div class="hi">🔄</div><div class="hinfo"><div class="ht">Behandlungs-Hinweise zurücksetzen</div><div class="hs2">Ausgeblendete Infofenster wieder einblenden</div></div></div>'+
     '<div class="dvd"></div>'+
     '<div class="hrow" onclick="logoutUser()"><div class="hi">🚪</div><div class="hinfo"><div class="ht">Abmelden</div><div class="hs2">Zurück zum Login</div></div></div>'+
     (!isAdmin(CUR_USER)?'<div class="hrow" onclick="deleteUserConfirm()"><div class="hi">🗑️</div><div class="hinfo"><div class="ht" style="color:var(--red)">Profil löschen</div><div class="hs2">Account und alle Daten entfernen</div></div></div>':'');
