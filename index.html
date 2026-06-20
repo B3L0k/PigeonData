@@ -559,7 +559,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
           </select>
         </div>
         <div class="fg" id="admin-pig-filter-year-wrap">
-          <label class="fl">Jahr</label>
+          <label class="fl">Jahr der Sicherung</label>
           <select class="fi" id="admin-pig-filter-year" onchange="renderAdminPigStats()">
             <option value="">— Alle —</option>
           </select>
@@ -585,6 +585,12 @@ select.fi option{background:var(--sur);color:var(--tx)}
         <div class="fg" id="admin-pig-filter-release-city-wrap" style="display:none">
           <label class="fl">Auswilderungsort</label>
           <select class="fi" id="admin-pig-filter-release-city" onchange="renderAdminPigStats()">
+            <option value="">— Alle —</option>
+          </select>
+        </div>
+        <div class="fg" id="admin-pig-filter-release-year-wrap" style="display:none">
+          <label class="fl">Jahr der Auswilderung</label>
+          <select class="fi" id="admin-pig-filter-release-year" onchange="renderAdminPigStats()">
             <option value="">— Alle —</option>
           </select>
         </div>
@@ -622,7 +628,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
       <div class="tab" onclick="setStatsScope('alle',this)">🌍 Alle Tauben</div>
     </div>
     <div class="fg" style="margin-bottom:14px">
-      <label class="fl">Jahr</label>
+      <label class="fl">Jahr der Sicherung</label>
       <select class="fi" id="stats-year-filter" onchange="renderStats()">
         <option value="">— Alle —</option>
       </select>
@@ -942,10 +948,10 @@ select.fi option{background:var(--sur);color:var(--tx)}
       <option>Zuffenhausen</option>
     </select>
   </div>
-  <div class="fg"><label class="fl">📅 Datum der Aufnahme</label><input class="fi" id="pf-intake" type="date"></div>
-  <div class="fg"><label class="fl"><span class="dove-ico"></span> Datum Auswilderung</label><input class="fi" id="pf-release" type="date"></div>
+  <div class="fg"><label class="fl">📅 Datum der Sicherung *</label><input class="fi" id="pf-intake" type="date"></div>
   <div class="fg"><label class="fl">📍 Ort der Auswilderung</label><input class="fi" id="pf-release2" placeholder="z.B. Park, Wald..." type="text"></div>
   <div class="fg"><label class="fl">🏙️ Stadt</label><input class="fi" id="pf-release2-city" placeholder="z.B. Stuttgart" type="text"></div>
+  <div class="fg"><label class="fl"><span class="dove-ico"></span> Datum Auswilderung</label><input class="fi" id="pf-release" type="date"></div>
   <div class="fg"><label class="fl">🏠 Taubenschlag</label>
     <select class="fi" id="pf-release2-loft">
       <option value="">— wählen —</option>
@@ -1341,9 +1347,13 @@ function savePigeon() {
   if (!name) { alert('Bitte Name eingeben'); return; }
   var foundCity = document.getElementById('pf-found-city').value.trim();
   if (!foundCity) { alert('Bitte Stadt (Ort der Sicherung) eingeben'); return; }
+  var intake = document.getElementById('pf-intake').value;
+  if (!intake) { alert('Bitte Datum der Sicherung eingeben'); return; }
   var release2 = document.getElementById('pf-release2').value.trim();
   var release2City = document.getElementById('pf-release2-city').value.trim();
   if (release2 && !release2City) { alert('Bitte Stadt (Ort der Auswilderung) eingeben'); return; }
+  var release = document.getElementById('pf-release').value;
+  if ((release2 || release2City) && !release) { alert('Bitte Datum der Auswilderung eingeben'); return; }
   var editId = document.getElementById('pig-edit-id').value;
   var d = {
     name: name,
@@ -1723,7 +1733,7 @@ function showDetail(id) {
     ['Eigener Zustand', p.health2], ['Symptome', (p.symptoms||[]).join(', ') + (p.symp2 ? (p.symptoms&&p.symptoms.length?', ':'')+p.symp2 : '')],
     ['Krankheiten/Parasiten', (p.diseases||[]).join(', ') + (p.dis2?(p.diseases&&p.diseases.length?', ':'')+p.dis2:'')],
     ['Letztes Gewicht', p.lastWeight ? p.lastWeight + 'g' : ''],
-    ['Ort der Sicherung', p.found], ['Stadt (Sicherung)', p.foundCity], ['Taubenschlag (Sicherung)', p.foundLoft], ['Aufnahme', p.intake],
+    ['Ort der Sicherung', p.found], ['Stadt (Sicherung)', p.foundCity], ['Taubenschlag (Sicherung)', p.foundLoft], ['Datum der Sicherung', p.intake],
     ['Auswilderung', p.release], ['Ort Auswilderung', p.release2], ['Stadt (Auswilderung)', p.release2City], ['Taubenschlag (Auswilderung)', p.release2Loft],
     ['Euthanasie', p.euth], ['Grund Euthanasie', p.euth2],
     ['🖤 Verstorben am', p.death], ['Todesursache', p.death2]
@@ -2170,6 +2180,7 @@ function onAdminPigSubviewChange() {
   document.getElementById('admin-pig-filter-disease-wrap').style.display = (sv==='krankheiten') ? 'block' : 'none';
   document.getElementById('admin-pig-filter-med-wrap').style.display = (sv==='medikamente') ? 'block' : 'none';
   document.getElementById('admin-pig-filter-release-city-wrap').style.display = (sv==='auswilderung') ? 'block' : 'none';
+  document.getElementById('admin-pig-filter-release-year-wrap').style.display = (sv==='auswilderung') ? 'block' : 'none';
 
   fillSelectOptions('admin-pig-filter-loft', distinctValues(DB.pigeons, 'foundLoft'));
   var pigYears = {};
@@ -2187,6 +2198,9 @@ function onAdminPigSubviewChange() {
   }
   if (sv === 'auswilderung') {
     fillSelectOptions('admin-pig-filter-release-city', distinctValues(DB.pigeons.filter(function(p){return !!p.release;}), 'release2City'));
+    var releaseYears = {};
+    DB.pigeons.forEach(function(p){ if (p.release) releaseYears[p.release.slice(0,4)] = true; });
+    fillSelectOptions('admin-pig-filter-release-year', Object.keys(releaseYears).sort(function(a,b){ return b - a; }));
   }
   renderAdminPigStats();
 }
@@ -2200,7 +2214,7 @@ function renderAdminPigStats() {
   var filterLabel = (statusFilter?' — Status: '+statusFilter:'') + (yearFilter?' — Jahr: '+yearFilter:'') + (loftFilter?' — Taubenschlag: '+loftFilter:'');
 
   // Status-, Jahr- und Taubenschlag-Filter gelten generell für alle Ansichten (Taubenschlag bezieht
-  // sich dabei auf den Taubenschlag am Ort der Sicherung, "foundLoft"; Jahr auf das Datum der Aufnahme).
+  // sich dabei auf den Taubenschlag am Ort der Sicherung, "foundLoft"; Jahr auf das Datum der Sicherung).
   var all = DB.pigeons;
   if (statusFilter) all = all.filter(function(p){ return (p.health||'Gesund')===statusFilter; });
   if (yearFilter) all = all.filter(function(p){ return ((p.intake||p.created||'')).slice(0,4) === yearFilter; });
@@ -2245,8 +2259,10 @@ function renderAdminPigStats() {
 
   } else if (sv === 'auswilderung') {
     var releaseCityFilter = document.getElementById('admin-pig-filter-release-city').value;
+    var releaseYearFilter = document.getElementById('admin-pig-filter-release-year') ? document.getElementById('admin-pig-filter-release-year').value : '';
     var released = all.filter(function(p){ return !!p.release; });
     if (releaseCityFilter) released = released.filter(function(p){ return p.release2City===releaseCityFilter; });
+    if (releaseYearFilter) released = released.filter(function(p){ return p.release.slice(0,4) === releaseYearFilter; });
     var byRCity = {}, byRLoft = {};
     released.forEach(function(p){
       var c = p.release2City || 'Unbekannt'; byRCity[c]=(byRCity[c]||0)+1;
@@ -2256,7 +2272,7 @@ function renderAdminPigStats() {
     html += '<div class="cwrap"><div class="ctit">📍 Nach Auswilderungsort (Stadt)</div>' + adminBarList(byRCity) + '</div>';
     html += '<div class="cwrap"><div class="ctit">🏠 Nach Taubenschlag (Auswilderung)</div>' + adminBarList(byRLoft) + '</div>';
     content.innerHTML = html;
-    ADMIN_PIG_EXPORT = { title: 'Auswilderung & Auswilderungsort' + filterLabel + (releaseCityFilter?' — Auswilderungsort: '+releaseCityFilter:''), rows: Object.keys(byRCity).map(function(c){ return { Auswilderungsort: c, Anzahl: byRCity[c] }; }) };
+    ADMIN_PIG_EXPORT = { title: 'Auswilderung & Auswilderungsort' + filterLabel + (releaseCityFilter?' — Auswilderungsort: '+releaseCityFilter:'') + (releaseYearFilter?' — Jahr der Auswilderung: '+releaseYearFilter:''), rows: Object.keys(byRCity).map(function(c){ return { Auswilderungsort: c, Anzahl: byRCity[c] }; }) };
 
   } else if (sv === 'krankheiten') {
     var diseaseFilter = document.getElementById('admin-pig-filter-disease').value;
@@ -3328,7 +3344,7 @@ var USER_HANDBOOK = [
   { title: '🏠 Startseite', content: 'Die Startseite begrüßt dich mit deinem Namen und zeigt eine Übersicht: Anzahl deiner Tauben, Einträge und den Gesundheitsstatus. Darunter findest du deine Postbox für Nachrichten sowie die letzten Einträge.' },
   { title: '＋ Eintrag erfassen', content: 'Tippe unten rechts auf das ＋ um schnell einen Eintrag zu erstellen. Im Menü stehen zur Auswahl:\n• <span class="dove-ico"></span> Neue Taube anlegen\n• ⚖️ Wiegen – Gewicht einer Taube erfassen\n• 🌾 Füttern – Fütterung mit Futter, Menge & Supplement dokumentieren\n• 👨‍⚕️ Tierarzt – Tierarztbesuch mit Befund & Behandlung erfassen\n• 💊 Medikation – Medikament, Dosierung & Verabreichungsweg eintragen\n\nJe nach Kategorie erscheint ein Formular mit passenden Feldern. Immer Taube, Datum und Uhrzeit angeben.' },
   { title: '✉️ Postbox', content: 'Die Postbox befindet sich auf der Startseite. Tippe auf den ✉️-Bereich um sie aufzuklappen.\n\nUngelesene Nachrichten werden mit einem Badge (Zahl) angezeigt. Tippe auf eine Nachricht um sie vollständig zu lesen und zu beantworten.\n\n• ✏️ Neue Nachricht – Tippe auf "Neue Nachricht schreiben" um einem anderen User zu schreiben\n• ↩️ Antworten – Direkt aus der Nachrichtenansicht antworten\n• 🗑️ Löschen – Nachricht "Für mich" oder "Für alle" löschen' },
-  { title: '<span class="dove-ico"></span> Tauben', content: 'Hier verwaltest du alle deine Pflegetauben.\n\nNeue Taube anlegen: Tippe auf das ＋ um eine neue Taube anzulegen. Felder:\n• Name, Ringnummer, Rasse, Geschlecht, Jahrgang, Farbe\n• Unterbringung (Box, Voliere, Schlag oder Freitext)\n• 📷 Profilfoto der Taube\n• 🏥 Gesundheit: Zustand, Symptome, Krankheiten/Parasiten\n• 📍 Fundort & Aufnahmedatum\n• Auswilderungs- und Eutha nasiedaten\n\nProfile sind nach Gesundheitszustand in Reiter eingeteilt: Alle · Gesund · Krank · Verstorben · Euthanasiert.\n\nTaube antippen → Detailansicht mit allen Infos, Einträgen und Buttons für Bearbeiten, Wiegen und Löschen.' },
+  { title: '<span class="dove-ico"></span> Tauben', content: 'Hier verwaltest du alle deine Pflegetauben.\n\nNeue Taube anlegen: Tippe auf das ＋ um eine neue Taube anzulegen. Felder:\n• Name, Ringnummer, Rasse, Geschlecht, Jahrgang, Farbe\n• Unterbringung (Box, Voliere, Schlag oder Freitext)\n• 📷 Profilfoto der Taube\n• 🏥 Gesundheit: Zustand, Symptome, Krankheiten/Parasiten\n• 📍 Fundort & Datum der Sicherung\n• Auswilderungs- und Euthanasiedaten\n\nProfile sind nach Gesundheitszustand in Reiter eingeteilt: Alle · Gesund · Krank · Verstorben · Euthanasiert.\n\nTaube antippen → Detailansicht mit allen Infos, Einträgen und Buttons für Bearbeiten, Wiegen und Löschen.' },
   { title: '📒 Tagebuch', content: 'Das Tagebuch zeigt alle Einträge chronologisch. Filter:\n• Taube: Dropdown oben – alle oder einzelne Taube\n• Typ: Reiter Alle / Gewicht / Futter / Tierarzt / Medikation\n• Sortierung: 🔽 Neueste zuerst / 🔼 Älteste zuerst\n\nJeden Eintrag kannst du ✏️ bearbeiten oder 🗑️ löschen.\n\nExport: 📊 Excel/CSV oder 📄 PDF – im PDF-Kopf erscheint das vollständige Taubenprofil.' },
   { title: '📊 Statistik', content: 'Die Statistik wertet deine Einträge grafisch aus. Wähle oben eine Taube als Filter.\n\nReiter:\n• ⚖️ Wiegen – Gewichtsbalkendiagramm der letzten 10 Messungen + vollständige Liste\n• 🌾 Füttern – Fütterungen pro Tag, häufigste Futtersorten und Supplements\n• 👨‍⚕️ Tierarzt – Besuche pro Monat + alle Einträge\n• 💊 Medikation – häufigste Medikamente + alle Einträge\n\nDarunter: Balkendiagramm Gesamt/Ausgewildert/Verstorben/Euthanasiert sowie Aufschlüsselung nach Ort der Sicherung.' },
   { title: '📝 Notizen', content: 'Hier kannst du eigene Notizen anlegen – unabhängig von Tauben und Einträgen.\n\nNeue Notiz: ＋ Neu Tippen.\n\nFelder:\n• Titel (optional)\n• Kategorie: Behandlung, Beobachtung, Erinnerung, Tierarzt, Fütterung, Sonstiges\n• Notiztext (Freitext)\n• Verknüpfte Taube (optional)\n• Datum\n\nNotizen sind durchsuchbar und können bearbeitet und gelöscht werden.' },
