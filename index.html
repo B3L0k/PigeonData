@@ -546,8 +546,8 @@ select.fi option{background:var(--sur);color:var(--tx)}
       </div>
 
       <div style="display:flex;gap:8px;margin-bottom:24px">
-        <button class="bexport" onclick="exportMeineLogsCSV()">📊 Einträge als Excel/CSV</button>
-        <button class="bexport" onclick="exportMeineLogsPDF()">📄 Einträge als PDF</button>
+        <button class="bexport" id="btn-export-logs-csv" onclick="exportMeineLogsCSV()">📊 Wiegen als Excel/CSV</button>
+        <button class="bexport" id="btn-export-logs-pdf" onclick="exportMeineLogsPDF()">📄 Wiegen als PDF</button>
       </div>
     </div>
 
@@ -1801,6 +1801,12 @@ function setStatsTab(tab, el) {
     var el2 = document.getElementById('stats-'+t);
     if (el2) el2.style.display = (t === tab) ? 'block' : 'none';
   });
+  var STATS_TAB_LABELS = { wiegen:'Wiegen', fuettern:'Füttern', tierarzt:'Tierarzt', medikation:'Medikation' };
+  var titel = STATS_TAB_LABELS[tab] || 'Einträge';
+  var btnCsv = document.getElementById('btn-export-logs-csv');
+  var btnPdf = document.getElementById('btn-export-logs-pdf');
+  if (btnCsv) btnCsv.textContent = '📊 ' + titel + ' als Excel/CSV';
+  if (btnPdf) btnPdf.textContent = '📄 ' + titel + ' als PDF';
   renderStats();
 }
 
@@ -1937,7 +1943,7 @@ function renderStats() {
 // EXPORT: Wiegen/Füttern/Tierarzt/Medikation (alle eigenen Einträge)
 // ============================================================
 function getMeineLogsRows() {
-  return DB.logs.slice()
+  return getStatLogs().slice()
     .sort(function(a,b){ return ((a.date||'')+(a.time||'')) < ((b.date||'')+(b.time||'')) ? 1 : -1; })
     .map(function(l) {
       var pig = DB.pigeons.find(function(p){ return p.id === l.pigeonId; });
@@ -1972,25 +1978,27 @@ function getMeineLogsRows() {
 }
 
 function exportMeineLogsCSV() {
-  if (!DB.logs.length) { toast('Keine Einträge zum Exportieren'); return; }
   var rows = getMeineLogsRows();
+  if (!rows.length) { toast('Keine Einträge für diese Auswahl zum Exportieren'); return; }
   var header = ['Typ','Taube','Datum','Uhrzeit','Details','Notiz'];
+  var titel = LOG_TITLES[CUR_STATS_TAB] || 'Einträge';
   var csv = '\ufeff';
-  csv += 'PigeonData — Wiegen/Füttern/Tierarzt/Medikation\n';
+  csv += 'PigeonData — '+titel+'\n';
   csv += 'Exportiert:;'+new Date().toLocaleString('de')+'\n';
   csv += 'Benutzer:;'+(CUR_USER ? CUR_USER.name : '')+'\n\n';
   csv += header.join(';') + '\n';
   rows.forEach(function(r){ csv += header.map(function(h){ return ('' + (r[h]||'')).replace(/;/g, ','); }).join(';') + '\n'; });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv;charset=utf-8;'}));
-  a.download = 'pigeondata_eintraege_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.download = 'pigeondata_'+CUR_STATS_TAB+'_'+new Date().toISOString().split('T')[0]+'.csv';
   a.click();
   toast('📊 CSV exportiert!');
 }
 
 function exportMeineLogsPDF() {
-  if (!DB.logs.length) { toast('Keine Einträge zum Exportieren'); return; }
   var rows = getMeineLogsRows();
+  if (!rows.length) { toast('Keine Einträge für diese Auswahl zum Exportieren'); return; }
+  var titel = LOG_TITLES[CUR_STATS_TAB] || 'Einträge';
   var rowsHtml = rows.map(function(r) {
     return '<tr><td style="padding:6px 10px;font-size:11px">'+r.Typ+'</td>'+
       '<td style="padding:6px 10px;font-size:11px">'+r.Taube+'</td>'+
@@ -2007,7 +2015,7 @@ function exportMeineLogsPDF() {
     'table th{background:#f4f4f8;text-align:left;padding:6px 10px;font-size:11px}'+
     'table td{border-bottom:1px solid #eee}'+
     '@media print{body{margin:10px}}</style></head><body>'+
-    '<div class="hb"><h1>🕊️ PigeonData — Wiegen / Füttern / Tierarzt / Medikation</h1>'+
+    '<div class="hb"><h1>🕊️ PigeonData — '+titel+'</h1>'+
     '<p style="color:#555;font-size:12px">Exportiert: '+new Date().toLocaleString('de')+'</p>'+
     '<p style="font-size:12px"><b>Benutzer:</b> '+(CUR_USER ? CUR_USER.name : '')+'</p></div>'+
     '<table><thead><tr><th>Typ</th><th>Taube</th><th>Datum</th><th>Uhrzeit</th><th>Details</th><th>Notiz</th></tr></thead><tbody>'+rowsHtml+'</tbody></table>'+
