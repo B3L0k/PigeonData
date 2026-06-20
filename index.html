@@ -936,21 +936,8 @@ select.fi option{background:var(--sur);color:var(--tx)}
         <div class="chip" onclick="tc(this)">Tricho Tabs</div>
       </div>
     </div>
-    <div class="fg"><label class="fl">Eigenes Medikament</label><input class="fi" id="lf-mname2" placeholder="z.B. Ronidazol, Baytril..." type="text"></div>
-    <div class="frow">
-      <div class="fg"><label class="fl">Dosierung</label><input class="fi" id="lf-mdose" placeholder="10mg, 0.5ml" type="text"></div>
-      <div class="fg"><label class="fl">Verabreichung</label>
-        <select class="fi" id="lf-mroute">
-          <option value="">— wählen —</option>
-          <option>oral (Wasser)</option><option>oral (Futter)</option><option>oral (direkt)</option>
-          <option>intramuskulär</option><option>subkutan</option><option>topisch</option>
-        </select>
-      </div>
-    </div>
-    <div class="frow">
-      <div class="fg"><label class="fl">Behandlungstag Nr.</label><input class="fi" id="lf-mday" placeholder="1" type="number" min="1"></div>
-      <div class="fg"><label class="fl">Dauer gesamt (Tage)</label><input class="fi" id="lf-mdur" placeholder="7" type="number" min="1"></div>
-    </div>
+    <div class="fg"><label class="fl">Eigenes Medikament</label><input class="fi" id="lf-mname2" placeholder="z.B. Ronidazol, Baytril..." type="text" oninput="renderMedDosageFields()"></div>
+    <div id="lf-med-dosage-container"></div>
     <div class="fg"><label class="fl">Eigene Anmerkung</label><input class="fi" id="lf-m2" placeholder="z.B. gut vertragen..." type="text"></div>
   </div>
 
@@ -1089,7 +1076,10 @@ function oc(e, id) { if (e.target.classList.contains('overlay')) cs(id); }
 // ============================================================
 // CHIPS
 // ============================================================
-function tc(el) { el.classList.toggle('on'); }
+function tc(el) {
+  el.classList.toggle('on');
+  if (el.parentElement && el.parentElement.id === 'lf-mname') renderMedDosageFields();
+}
 // ============================================================
 // GEBURTSJAHR DROPDOWN
 // ============================================================
@@ -1322,6 +1312,7 @@ function openLog(type) {
     var examTxt = document.getElementById('lf-exam2'); if (examTxt) examTxt.value = '';
     setChips('lf-mname', []);
     var mTxt = document.getElementById('lf-mname2'); if (mTxt) mTxt.value = '';
+    renderMedDosageFields({});
   }
   openSheet('sh-log');
 }
@@ -1368,10 +1359,7 @@ function saveLog() {
   if (CUR_TYPE === 'medikation') {
     log.mname = chips('lf-mname');
     log.mname2 = document.getElementById('lf-mname2').value.trim();
-    log.mdose = document.getElementById('lf-mdose').value.trim();
-    log.mroute = document.getElementById('lf-mroute').value;
-    log.mday = document.getElementById('lf-mday').value;
-    log.mdur = document.getElementById('lf-mdur').value;
+    log.mdosages = collectMedDosagesForSave();
     log.m2 = document.getElementById('lf-m2').value.trim();
   }
   var editId = document.getElementById('sh-log').dataset.editId;
@@ -1429,10 +1417,16 @@ function editLog(id) {
         setChips('lf-mname', []);
         document.getElementById('lf-mname2').value = l.mname || '';
       }
-      document.getElementById('lf-mdose').value = l.mdose || '';
-      document.getElementById('lf-mroute').value = l.mroute || '';
-      document.getElementById('lf-mday').value = l.mday || '';
-      document.getElementById('lf-mdur').value = l.mdur || '';
+      var medDosages = l.mdosages;
+      if (!medDosages && (l.mdose || l.mroute || l.mday || l.mdur)) {
+        // Altdaten (vor Mehrfach-Dosierung): einzelnes Dosierungs-Set dem ersten Medikament zuordnen
+        var firstMedName = getActiveMedNames()[0];
+        if (firstMedName) {
+          medDosages = {};
+          medDosages[firstMedName] = { dose: l.mdose||'', route: l.mroute||'', day: l.mday||'', dur: l.mdur||'' };
+        }
+      }
+      renderMedDosageFields(medDosages || {});
       document.getElementById('lf-m2').value = l.m2 || '';
     }
     document.getElementById('sh-log').dataset.editId = id;
@@ -1631,9 +1625,20 @@ function logCard(l) {
   if (l.vet2) f2('Anmerkung Tierarzt', l.vet2, true);
   if (l.mname && l.mname.length) f2('Medikament', Array.isArray(l.mname) ? l.mname.join(', ') : l.mname, true);
   if (l.mname2) f2('Eigenes Medikament', l.mname2, true);
-  if (l.mdose) f2('Dosierung', l.mdose);
-  if (l.mroute) f2('Verabreichung', l.mroute);
-  if (l.mday || l.mdur) f2('Behandlungstag', (l.mday||'—') + ' / ' + (l.mdur||'?'));
+  if (l.mdosages && Object.keys(l.mdosages).length) {
+    Object.keys(l.mdosages).forEach(function(mn) {
+      var mv = l.mdosages[mn];
+      var mparts = [];
+      if (mv.dose) mparts.push(mv.dose);
+      if (mv.route) mparts.push(mv.route);
+      if (mv.day || mv.dur) mparts.push('Tag ' + (mv.day||'—') + '/' + (mv.dur||'?'));
+      if (mparts.length) f2('💊 ' + mn, mparts.join(' · '), true);
+    });
+  } else {
+    if (l.mdose) f2('Dosierung', l.mdose);
+    if (l.mroute) f2('Verabreichung', l.mroute);
+    if (l.mday || l.mdur) f2('Behandlungstag', (l.mday||'—') + ' / ' + (l.mdur||'?'));
+  }
   if (l.m2) f2('Anmerkung', l.m2, true);
   if (l.notes) f2('Notiz', l.notes, true);
   return '<div class="lentry">' +
@@ -1847,6 +1852,105 @@ function countBarList(items, label) {
   }).join('');
 }
 
+var MED_ROUTE_OPTIONS = ['oral (Wasser)','oral (Futter)','oral (direkt)','intramuskulär','subkutan','topisch'];
+
+function getActiveMedNames() {
+  var names = chips('lf-mname').slice();
+  var customEl = document.getElementById('lf-mname2');
+  var custom = customEl ? customEl.value.trim() : '';
+  if (custom) names.push(custom);
+  return names;
+}
+
+function collectCurrentMedDosages() {
+  // Liest die aktuell im Formular stehenden Werte aus, BEVOR neu gerendert wird,
+  // damit beim Hinzufügen/Entfernen eines Medikaments keine bereits erfassten Werte verloren gehen.
+  var out = {};
+  document.querySelectorAll('#lf-med-dosage-container [data-med-name]').forEach(function(block) {
+    var name = block.getAttribute('data-med-name');
+    out[name] = {
+      dose: block.querySelector('[data-field="dose"]').value,
+      route: block.querySelector('[data-field="route"]').value,
+      day: block.querySelector('[data-field="day"]').value,
+      dur: block.querySelector('[data-field="dur"]').value
+    };
+  });
+  return out;
+}
+
+function renderMedDosageFields(existingDosages) {
+  var container = document.getElementById('lf-med-dosage-container'); if (!container) return;
+  var preserved = existingDosages || collectCurrentMedDosages();
+  var names = getActiveMedNames();
+  if (!names.length) {
+    container.innerHTML = '<p style="color:var(--mu);font-size:13px;padding:6px 0 14px">Bitte oben ein oder mehrere Medikamente auswählen, um die Dosierung zu erfassen.</p>';
+    return;
+  }
+  container.innerHTML = names.map(function(name) {
+    var v = preserved[name] || {};
+    var safeName = name.replace(/"/g,'&quot;');
+    var routeOpts = '<option value="">— wählen —</option>' + MED_ROUTE_OPTIONS.map(function(o){
+      return '<option'+(v.route===o?' selected':'')+'>'+o+'</option>';
+    }).join('');
+    return '<div class="cwrap" data-med-name="'+safeName+'" style="margin-bottom:12px">'+
+      '<div class="ctit" style="margin-bottom:10px">💊 '+name+'</div>'+
+      '<div class="frow">'+
+        '<div class="fg"><label class="fl">Dosierung</label><input class="fi" data-field="dose" placeholder="10mg, 0.5ml" type="text" value="'+(v.dose||'').replace(/"/g,'&quot;')+'"></div>'+
+        '<div class="fg"><label class="fl">Verabreichung</label><select class="fi" data-field="route">'+routeOpts+'</select></div>'+
+      '</div>'+
+      '<div class="frow">'+
+        '<div class="fg"><label class="fl">Behandlungstag Nr.</label><input class="fi" data-field="day" placeholder="1" type="number" min="1" value="'+(v.day||'')+'"></div>'+
+        '<div class="fg"><label class="fl">Dauer gesamt (Tage)</label><input class="fi" data-field="dur" placeholder="7" type="number" min="1" value="'+(v.dur||'')+'"></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function collectMedDosagesForSave() {
+  var out = {};
+  document.querySelectorAll('#lf-med-dosage-container [data-med-name]').forEach(function(block) {
+    var name = block.getAttribute('data-med-name');
+    out[name] = {
+      dose: block.querySelector('[data-field="dose"]').value.trim(),
+      route: block.querySelector('[data-field="route"]').value,
+      day: block.querySelector('[data-field="day"]').value,
+      dur: block.querySelector('[data-field="dur"]').value
+    };
+  });
+  return out;
+}
+
+// Anzeige einer Liste von Medikationseinträgen mit (ggf. mehreren) Dosierungen pro Medikament.
+// Fällt für alte Einträge ohne "mdosages" auf die früheren Einzelfelder zurück.
+function medikationLogList(logs) {
+  if (!logs.length) return '<p style="color:var(--mu);font-size:13px;padding:8px 0">Keine Einträge</p>';
+  return logs.slice(0,20).map(function(l) {
+    var pig = DB.pigeons.find(function(p){return p.id===l.pigeonId;});
+    var medNames = [].concat(l.mname||[], l.mname2?[l.mname2]:[]);
+    var row = '<div style="padding:10px 0;border-bottom:1px solid var(--bdr)">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+      '<span style="font-size:12px;font-weight:600">'+(pig?pig.name:'—')+'</span>' +
+      '<span style="font-size:11px;color:var(--mu)">'+(l.date||'')+'</span></div>';
+    if (l.mdosages && Object.keys(l.mdosages).length) {
+      medNames.forEach(function(name) {
+        var v = l.mdosages[name] || {};
+        var parts = [];
+        if (v.dose) parts.push(v.dose);
+        if (v.route) parts.push(v.route);
+        if (v.day || v.dur) parts.push('Tag '+(v.day||'—')+'/'+(v.dur||'?'));
+        row += '<div style="font-size:12px;color:var(--mu)">💊 '+name+(parts.length?': <span style="color:var(--tx)">'+parts.join(' · ')+'</span>':'')+'</div>';
+      });
+    } else {
+      if (medNames.length) row += '<div style="font-size:12px;color:var(--mu)">Medikament: <span style="color:var(--tx)">'+medNames.join(', ')+'</span></div>';
+      if (l.mdose) row += '<div style="font-size:12px;color:var(--mu)">Dosierung: <span style="color:var(--tx)">'+l.mdose+'</span></div>';
+      if (l.mroute) row += '<div style="font-size:12px;color:var(--mu)">Verabreichung: <span style="color:var(--tx)">'+l.mroute+'</span></div>';
+      if (l.mday || l.mdur) row += '<div style="font-size:12px;color:var(--mu)">Behandlungstag: <span style="color:var(--tx)">'+(l.mday||'—')+' / '+(l.mdur||'?')+'</span></div>';
+    }
+    row += '</div>';
+    return row;
+  }).join('');
+}
+
 function simpleLogList(logs, fields) {
   if (!logs.length) return '<p style="color:var(--mu);font-size:13px;padding:8px 0">Keine Einträge</p>';
   return logs.slice(0,20).map(function(l){
@@ -1932,9 +2036,8 @@ function renderStats() {
   if (CUR_STATS_TAB === 'medikation') {
     var allMeds = logs.map(function(l){ return {mname:(Array.isArray(l.mname)?l.mname:(l.mname?[l.mname]:[])).concat(l.mname2?[l.mname2]:[])}; });
     document.getElementById('stats-med-list').innerHTML = countBarList(countBy(allMeds,'mname'));
-    document.getElementById('stats-mlog-list').innerHTML = simpleLogList(
-      logs.slice().sort(function(a,b){return b.date>a.date?1:-1;}),
-      [{key:'mname',label:'Medikament'},{key:'mdose',label:'Dosierung'},{key:'mroute',label:'Verabreichung'},{key:'mday',label:'Tag'},{key:'mdur',label:'Dauer'}]
+    document.getElementById('stats-mlog-list').innerHTML = medikationLogList(
+      logs.slice().sort(function(a,b){return b.date>a.date?1:-1;})
     );
   }
 }
@@ -1962,9 +2065,21 @@ function getMeineLogsRows() {
         if (l.med) details += (details?' | ':'') + 'Medikament: ' + l.med + (l.dose ? ' (' + l.dose + ')' : '');
         if (l.vet) details += (details?' | ':'') + 'Tierarzt: ' + l.vet;
       } else if (l.type === 'medikation') {
-        details = [].concat(l.mname||[], l.mname2?[l.mname2]:[]).join(', ');
-        if (l.mdose) details += ' (' + l.mdose + ')';
-        if (l.mroute) details += (details?' | ':'') + l.mroute;
+        var medNamesExp = [].concat(l.mname||[], l.mname2?[l.mname2]:[]);
+        if (l.mdosages && Object.keys(l.mdosages).length) {
+          details = medNamesExp.map(function(mn) {
+            var mv = l.mdosages[mn] || {};
+            var p = [mn];
+            if (mv.dose) p.push(mv.dose);
+            if (mv.route) p.push(mv.route);
+            if (mv.day || mv.dur) p.push('Tag '+(mv.day||'—')+'/'+(mv.dur||'?'));
+            return p.join(' ');
+          }).join(' | ');
+        } else {
+          details = medNamesExp.join(', ');
+          if (l.mdose) details += ' (' + l.mdose + ')';
+          if (l.mroute) details += (details?' | ':'') + l.mroute;
+        }
       }
       return {
         Typ: (LOG_TITLES[l.type] || l.type),
@@ -2271,9 +2386,27 @@ function logsToRows(logs) {
       'Tierarzt': l.vet||'', 'Befund': l.diag||'',
       'Untersuchungen': (l.exam||[]).join(', ')+(l.exam2?', '+l.exam2:''),
       'Medikament Tierarzt': l.med||'', 'Dosis Tierarzt': l.dose||'',
-      'Medikament': (Array.isArray(l.mname)?l.mname.join(', '):(l.mname||''))+(l.mname2?', '+l.mname2:''), 'Dosierung': l.mdose||'',
-      'Verabreichung': l.mroute||'', 'Behandlungstag': l.mday||'',
-      'Behandlungsdauer': l.mdur||'', 'Notizen': l.notes||''
+      'Medikament': (Array.isArray(l.mname)?l.mname.join(', '):(l.mname||''))+(l.mname2?', '+l.mname2:''),
+      'Medikation Details': (function() {
+        if (l.type !== 'medikation') return '';
+        var names = [].concat(Array.isArray(l.mname)?l.mname:(l.mname?[l.mname]:[]), l.mname2?[l.mname2]:[]);
+        if (l.mdosages && Object.keys(l.mdosages).length) {
+          return names.map(function(mn) {
+            var mv = l.mdosages[mn] || {};
+            var p = [mn];
+            if (mv.dose) p.push(mv.dose);
+            if (mv.route) p.push(mv.route);
+            if (mv.day || mv.dur) p.push('Tag '+(mv.day||'—')+'/'+(mv.dur||'?'));
+            return p.join(' ');
+          }).join(' | ');
+        }
+        var legacy = [];
+        if (l.mdose) legacy.push(l.mdose);
+        if (l.mroute) legacy.push(l.mroute);
+        if (l.mday || l.mdur) legacy.push('Tag '+(l.mday||'—')+'/'+(l.mdur||'?'));
+        return legacy.join(' · ');
+      })(),
+      'Notizen': l.notes||''
     };
   });
 }
