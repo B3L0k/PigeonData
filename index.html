@@ -108,6 +108,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .sheet{background:var(--sur);border-radius:20px 20px 0 0;width:100%;max-width:480px;margin:0 auto;max-height:92vh;overflow-y:auto;padding:20px;animation:sup .3s ease}
 @keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .handle{width:40px;height:4px;background:var(--bdr);border-radius:2px;margin:0 auto 20px}
+.sheet-close-btn{position:fixed;top:max(14px,env(safe-area-inset-top,0px));left:14px;z-index:2000;width:38px;height:38px;border-radius:50%;background:var(--sur);border:1px solid var(--bdr);color:var(--tx);font-size:18px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.4);cursor:pointer}
+.sheet-close-btn:active{background:var(--bdr)}
 .stit{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:20px}
 /* FORM */
 .fg{margin-bottom:16px}
@@ -200,7 +202,23 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <div class="fg"><label class="fl">Passwort</label><input class="fi" id="lg-password" type="password" autocomplete="current-password" placeholder="Passwort" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="btn1" onclick="doLogin()">Anmelden</button>
     <div id="lg-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
+    <div style="text-align:center;margin-top:8px">
+      <a href="#" onclick="event.preventDefault();openForgotPasswordSheet()" style="color:var(--acc);font-size:13px;text-decoration:none">Passwort vergessen?</a>
+    </div>
   </div>
+</div>
+
+<!-- FORGOT PASSWORD SHEET -->
+<div class="overlay" id="sh-forgot-pw" onclick="oc(event,'sh-forgot-pw')">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit">🔑 Passwort vergessen</div>
+  <p style="color:var(--mu);font-size:13px;margin-bottom:14px">Gib deinen Benutzernamen ein. Falls eine E-Mail-Adresse hinterlegt ist, senden wir dir einen Link zum Zurücksetzen.</p>
+  <div class="fg"><label class="fl">Benutzername</label><input class="fi" id="fp-username" type="text" placeholder="Benutzername"></div>
+  <button class="btn1" onclick="sendPasswordReset()">Link anfordern</button>
+  <button class="btn2" onclick="cs('sh-forgot-pw')">Abbrechen</button>
+  <div id="fp-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
+ </div>
 </div>
 
 <!-- FORCE PASSWORD CHANGE SCREEN -->
@@ -277,6 +295,44 @@ select.fi option{background:var(--sur);color:var(--tx)}
  </div>
 </div>
 
+<!-- TASK SHEET (Aufgabe anlegen/bearbeiten) -->
+<div class="overlay" id="sh-task" onclick="oc(event,'sh-task')">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit" id="task-sheet-title">➕ Neue Aufgabe</div>
+  <input type="hidden" id="task-edit-id">
+  <div class="fg"><label class="fl">Titel</label><input class="fi" id="tf-title" type="text" placeholder="Titel der Aufgabe"></div>
+  <div class="fg"><label class="fl">Beschreibung</label><textarea class="fi" id="tf-text" rows="3" placeholder="Details zur Aufgabe..."></textarea></div>
+  <div class="fg"><label class="fl">Priorität</label>
+    <select class="fi" id="tf-priority">
+      <option value="niedrig">⚪ Niedrig</option>
+      <option value="mittel" selected>🟡 Mittel</option>
+      <option value="hoch">🟠 Hoch</option>
+      <option value="dringend">🔴 Dringend</option>
+    </select>
+  </div>
+  <div class="fg"><label class="fl">Frist</label><input class="fi" id="tf-due" type="date"></div>
+  <div class="fg"><label class="fl">Verknüpfter User (optional)</label>
+    <select class="fi" id="tf-user"><option value="">— Keine —</option></select>
+  </div>
+  <button class="btn1" onclick="saveTask()">Speichern</button>
+  <button class="btn2" onclick="cs('sh-task')">Abbrechen</button>
+ </div>
+</div>
+
+<!-- ADMIN EDIT NAME SHEET -->
+<div class="overlay" id="sh-admin-edit-name" onclick="oc(event,'sh-admin-edit-name')" style="z-index:1002">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit">✏️ Namen ändern</div>
+  <input type="hidden" id="aen-user-id">
+  <div class="fg"><label class="fl">Name</label><input class="fi" id="aen-name" type="text" placeholder="Voller Name"></div>
+  <button class="btn1" onclick="saveAdminEditName()">Speichern</button>
+  <button class="btn2" onclick="cs('sh-admin-edit-name')">Abbrechen</button>
+  <div id="aen-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
+ </div>
+</div>
+
 <!-- CHANGE AVATAR SHEET -->
 <div class="overlay" id="sh-change-avatar" onclick="oc(event,'sh-change-avatar')" style="z-index:1003">
  <div class="sheet">
@@ -326,6 +382,8 @@ select.fi option{background:var(--sur);color:var(--tx)}
  </div>
 </div>
 
+<button id="sheet-close-btn" class="sheet-close-btn" onclick="closeCurrentSheet()" aria-label="Schließen">←</button>
+
 <div class="topbar">
   <div class="logo">Pigeon<span>Data</span></div>
   <div class="acc-bar" id="acc-bar" onclick="openUserSettings()">
@@ -346,12 +404,14 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <h2 id="hero-greeting">Hallo!</h2>
     <p id="hdate"></p>
   </div>
-  <div class="sgrid">
+  <div class="sgrid" id="home-kpis">
     <div class="scard"><div class="v" id="st-p">0</div><div class="l">Tauben</div></div>
     <div class="scard"><div class="v" id="st-l">0</div><div class="l">Einträge</div></div>
     <div class="scard"><div class="v" id="st-h">—</div><div class="l">Gesundheit</div></div>
   </div>
   <div class="dvd"></div>
+
+  <div id="home-task-banner" style="display:none"></div>
 
   <!-- INBOX -->
   <div class="inbox-wrap" id="home-inbox">
@@ -367,7 +427,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
     </div>
   </div>
 
-  <div class="stitle">📋 Letzte Einträge</div>
+  <div class="stitle" id="home-logs-title">📋 Letzte Einträge</div>
   <div id="home-logs"></div>
 </div>
 
@@ -484,6 +544,11 @@ select.fi option{background:var(--sur);color:var(--tx)}
         <div class="cwrap"><div class="ctit">Häufigste Medikamente</div><div id="stats-med-list"></div></div>
         <div class="cwrap"><div class="ctit">Alle Medikationseinträge</div><div id="stats-mlog-list"></div></div>
       </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:24px">
+        <button class="bexport" onclick="exportMeineLogsCSV()">📊 Einträge als Excel/CSV</button>
+        <button class="bexport" onclick="exportMeineLogsPDF()">📄 Einträge als PDF</button>
+      </div>
     </div>
 
     <!-- SCOPE: ALLE TAUBEN (global über ALLE Profile/Nutzer:innen) -->
@@ -517,7 +582,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="tabs" id="admin-tabs">
     <div class="tab on" onclick="setAdminTab('users',this)">👥 User</div>
     <div class="tab" onclick="setAdminTab('messages',this)">✉️ Nachrichten</div>
-    <div class="tab" onclick="setAdminTab('overview',this)">📊 Übersicht</div>
+    <div class="tab" onclick="setAdminTab('tasks',this)">✅ Aufgaben</div>
   </div>
 
   <!-- USERS TAB -->
@@ -542,9 +607,10 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <div id="admin-msg-list"></div>
   </div>
 
-  <!-- OVERVIEW TAB -->
-  <div id="admin-tab-overview" style="display:none">
-    <div id="admin-overview-content"></div>
+  <!-- TASKS TAB -->
+  <div id="admin-tab-tasks" style="display:none">
+    <button class="btn1" style="margin-bottom:16px" onclick="openTaskSheet(null)">＋ Neue Aufgabe</button>
+    <div id="admin-task-list"></div>
   </div>
 </div>
 
@@ -583,7 +649,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
     </select>
   </div>
   <div class="fg"><label class="fl">Notiz</label><textarea class="fi" id="nf-text" rows="6" placeholder="Freie Notiz..."></textarea></div>
-  <div class="fg"><label class="fl">Verknüpfte Taube (optional)</label><select class="fi" id="nf-pig"><option value="">— Keine —</option></select></div>
+  <div class="fg"><label class="fl" id="nf-pig-label">Verknüpfte Taube (optional)</label><select class="fi" id="nf-pig"><option value="">— Keine —</option></select></div>
   <div class="fg"><label class="fl">Datum</label><input class="fi" id="nf-date" type="date"></div>
   <button class="btn1" onclick="saveNote()">Notiz speichern</button>
   <button class="btn2" onclick="cancelNoteForm()">Abbrechen</button>
@@ -595,11 +661,17 @@ select.fi option{background:var(--sur);color:var(--tx)}
  <div class="sheet">
   <div class="handle"></div>
   <div class="stit">Neuer Eintrag</div>
-  <div class="hrow" onclick="cs('sh-fab');openSheet('sh-pigeon')"><div class="hi">🕊️</div><div class="hinfo"><div class="ht">Neue Taube anlegen</div><div class="hs2">Taube zum Bestand hinzufügen</div></div></div>
-  <div class="hrow" onclick="cs('sh-fab');openLog('wiegen')"><div class="hi">⚖️</div><div class="hinfo"><div class="ht">Gewicht erfassen</div><div class="hs2">Gewichtseintrag erstellen</div></div></div>
-  <div class="hrow" onclick="cs('sh-fab');openLog('fuettern')"><div class="hi">🌾</div><div class="hinfo"><div class="ht">Fütterung erfassen</div><div class="hs2">Futter & Supplement eintragen</div></div></div>
-  <div class="hrow" onclick="cs('sh-fab');openLog('tierarzt')"><div class="hi">👨‍⚕️</div><div class="hinfo"><div class="ht">Tierarztbesuch</div><div class="hs2">Befund & Behandlung erfassen</div></div></div>
-  <div class="hrow" onclick="cs('sh-fab');openLog('medikation')"><div class="hi">💊</div><div class="hinfo"><div class="ht">Medikation erfassen</div><div class="hs2">Medikament & Dosierung eintragen</div></div></div>
+  <div id="sh-fab-body-user">
+    <div class="hrow" onclick="cs('sh-fab');openSheet('sh-pigeon')"><div class="hi">🕊️</div><div class="hinfo"><div class="ht">Neue Taube anlegen</div><div class="hs2">Taube zum Bestand hinzufügen</div></div></div>
+    <div class="hrow" onclick="cs('sh-fab');openLog('wiegen')"><div class="hi">⚖️</div><div class="hinfo"><div class="ht">Gewicht erfassen</div><div class="hs2">Gewichtseintrag erstellen</div></div></div>
+    <div class="hrow" onclick="cs('sh-fab');openLog('fuettern')"><div class="hi">🌾</div><div class="hinfo"><div class="ht">Fütterung erfassen</div><div class="hs2">Futter & Supplement eintragen</div></div></div>
+    <div class="hrow" onclick="cs('sh-fab');openLog('tierarzt')"><div class="hi">👨‍⚕️</div><div class="hinfo"><div class="ht">Tierarztbesuch</div><div class="hs2">Befund & Behandlung erfassen</div></div></div>
+    <div class="hrow" onclick="cs('sh-fab');openLog('medikation')"><div class="hi">💊</div><div class="hinfo"><div class="ht">Medikation erfassen</div><div class="hs2">Medikament & Dosierung eintragen</div></div></div>
+  </div>
+  <div id="sh-fab-body-admin" style="display:none">
+    <div class="hrow" onclick="cs('sh-fab');openNewUserSheet()"><div class="hi">👤</div><div class="hinfo"><div class="ht">Profil anlegen</div><div class="hs2">Neuen Benutzer anlegen</div></div></div>
+    <div class="hrow" onclick="cs('sh-fab');openTaskSheet(null)"><div class="hi">✅</div><div class="hinfo"><div class="ht">Aufgabe anlegen</div><div class="hs2">Neue Aufgabe erstellen</div></div></div>
+  </div>
  </div>
 </div>
 
@@ -706,7 +778,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
 
   <div class="dvd"></div>
   <div class="stit2">📍 Fundort & Verlauf</div>
-  <div class="fg"><label class="fl">📍 Ort der Sicherung</label><input class="fi" id="pf-found" placeholder="z.B. Straße, Stadt..." type="text"></div>
+  <div class="fg"><label class="fl">📍 Ort der Sicherung</label><input class="fi" id="pf-found" placeholder="z.B. Straße, Platz..." type="text"></div>
   <div class="fg"><label class="fl">🏙️ Stadt *</label><input class="fi" id="pf-found-city" placeholder="z.B. Stuttgart" type="text"></div>
   <div class="fg"><label class="fl">🏠 Taubenschlag</label>
     <select class="fi" id="pf-found-loft">
@@ -987,8 +1059,31 @@ function updateNavForUser() {
 // ============================================================
 // SHEETS
 // ============================================================
-function openSheet(id) { var el = document.getElementById(id); if (el) el.classList.add('on'); }
-function cs(id) { var el = document.getElementById(id); if (el) el.classList.remove('on'); }
+var CURRENT_OPEN_SHEET = null;
+function renderFabMenu() {
+  var admin = CUR_USER && isAdmin(CUR_USER);
+  var userBody = document.getElementById('sh-fab-body-user');
+  var adminBody = document.getElementById('sh-fab-body-admin');
+  if (userBody) userBody.style.display = admin ? 'none' : 'block';
+  if (adminBody) adminBody.style.display = admin ? 'block' : 'none';
+}
+
+function openSheet(id) {
+  var el = document.getElementById(id); if (!el) return;
+  el.classList.add('on');
+  CURRENT_OPEN_SHEET = id;
+  var btn = document.getElementById('sheet-close-btn');
+  if (btn) btn.style.display = 'flex';
+}
+function cs(id) {
+  var el = document.getElementById(id); if (el) el.classList.remove('on');
+  if (CURRENT_OPEN_SHEET === id) {
+    CURRENT_OPEN_SHEET = null;
+    var btn = document.getElementById('sheet-close-btn');
+    if (btn) btn.style.display = 'none';
+  }
+}
+function closeCurrentSheet() { if (CURRENT_OPEN_SHEET) cs(CURRENT_OPEN_SHEET); }
 function oc(e, id) { if (e.target.classList.contains('overlay')) cs(id); }
 
 // ============================================================
@@ -1354,14 +1449,41 @@ function deleteLog(id) {
 // ============================================================
 // RENDER HOME
 // ============================================================
+function userMiniCard(u) {
+  var av = u.photo
+    ? '<img src="'+u.photo+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:50%">'
+    : '<span style="font-size:18px">'+(u.name||'?').charAt(0).toUpperCase()+'</span>';
+  return '<div class="lentry"><div style="display:flex;align-items:center;gap:12px">'+
+    '<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;flex-shrink:0">'+av+'</div>'+
+    '<div><div style="font-weight:600;font-size:14px">'+u.name+'</div><div style="font-size:12px;color:var(--mu)">@'+(u.username||'—')+(u.created?' · seit '+new Date(u.created).toLocaleDateString('de-AT'):'')+'</div></div>'+
+  '</div></div>';
+}
+
 function renderHome() {
-  document.getElementById('st-p').textContent = DB.pigeons.length;
-  document.getElementById('st-l').textContent = DB.logs.length;
-  var sick = DB.pigeons.filter(function(p){return p.health && p.health !== 'Gesund';}).length;
-  document.getElementById('st-h').textContent = sick > 0 ? sick + '⚠️' : '✅';
-  var recent = DB.logs.slice().sort(function(a,b){return b.created > a.created ? 1 : -1;}).slice(0,3);
+  var admin = CUR_USER && isAdmin(CUR_USER);
+  var kpis = document.getElementById('home-kpis');
+  var banner = document.getElementById('home-task-banner');
+  var logsTitle = document.getElementById('home-logs-title');
   var el = document.getElementById('home-logs');
-  el.innerHTML = recent.length ? recent.map(logCard).join('') : '<div class="empty"><div class="ei">📋</div><p>Noch keine Einträge.<br>Nutze das ＋ um einen Eintrag zu erstellen.</p></div>';
+
+  if (admin) {
+    if (kpis) kpis.style.display = 'none';
+    if (logsTitle) logsTitle.textContent = '🆕 Zuletzt angelegte User';
+    var recentUsers = USERS.slice().sort(function(a,b){ return (b.created||'') > (a.created||'') ? 1 : -1; }).slice(0,3);
+    el.innerHTML = recentUsers.length ? recentUsers.map(userMiniCard).join('') : '<div class="empty"><div class="ei">👥</div><p>Noch keine weiteren User angelegt.</p></div>';
+    renderHomeTaskBanner();
+  } else {
+    if (kpis) kpis.style.display = '';
+    if (banner) banner.style.display = 'none';
+    document.getElementById('st-p').textContent = DB.pigeons.length;
+    document.getElementById('st-l').textContent = DB.logs.length;
+    var sick = DB.pigeons.filter(function(p){return p.health && p.health !== 'Gesund';}).length;
+    document.getElementById('st-h').textContent = sick > 0 ? sick + '⚠️' : '✅';
+    if (logsTitle) logsTitle.textContent = '📋 Letzte Einträge';
+    var recent = DB.logs.slice().sort(function(a,b){return b.created > a.created ? 1 : -1;}).slice(0,3);
+    el.innerHTML = recent.length ? recent.map(logCard).join('') : '<div class="empty"><div class="ei">📋</div><p>Noch keine Einträge.<br>Nutze das ＋ um einen Eintrag zu erstellen.</p></div>';
+  }
+
   document.getElementById('hdate').textContent = new Date().toLocaleDateString('de-AT',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   var greet = document.getElementById('hero-greeting');
   if (greet) {
@@ -1812,6 +1934,89 @@ function renderStats() {
 }
 
 // ============================================================
+// EXPORT: Wiegen/Füttern/Tierarzt/Medikation (alle eigenen Einträge)
+// ============================================================
+function getMeineLogsRows() {
+  return DB.logs.slice()
+    .sort(function(a,b){ return ((a.date||'')+(a.time||'')) < ((b.date||'')+(b.time||'')) ? 1 : -1; })
+    .map(function(l) {
+      var pig = DB.pigeons.find(function(p){ return p.id === l.pigeonId; });
+      var details = '';
+      if (l.type === 'wiegen') {
+        details = (l.weight ? l.weight + ' g' : '') + (l.weight2 ? ' — ' + l.weight2 : '');
+      } else if (l.type === 'fuettern') {
+        details = [].concat(l.food||[], l.food2?[l.food2]:[]).join(', ');
+        if (l.amount) details += ' (' + l.amount + (l.unit||'') + ')';
+        var supp = [].concat(l.supp||[], l.supp2?[l.supp2]:[]).join(', ');
+        if (supp) details += (details?' | ':'') + 'Supplemente: ' + supp;
+      } else if (l.type === 'tierarzt') {
+        details = l.diag || '';
+        var exam = [].concat(l.exam||[], l.exam2?[l.exam2]:[]).join(', ');
+        if (exam) details += (details?' | ':'') + 'Untersuchung: ' + exam;
+        if (l.med) details += (details?' | ':'') + 'Medikament: ' + l.med + (l.dose ? ' (' + l.dose + ')' : '');
+        if (l.vet) details += (details?' | ':'') + 'Tierarzt: ' + l.vet;
+      } else if (l.type === 'medikation') {
+        details = [].concat(l.mname||[], l.mname2?[l.mname2]:[]).join(', ');
+        if (l.mdose) details += ' (' + l.mdose + ')';
+        if (l.mroute) details += (details?' | ':'') + l.mroute;
+      }
+      return {
+        Typ: (LOG_TITLES[l.type] || l.type),
+        Taube: pig ? pig.name : '—',
+        Datum: l.date || '',
+        Uhrzeit: l.time || '',
+        Details: details,
+        Notiz: l.notes || ''
+      };
+    });
+}
+
+function exportMeineLogsCSV() {
+  if (!DB.logs.length) { toast('Keine Einträge zum Exportieren'); return; }
+  var rows = getMeineLogsRows();
+  var header = ['Typ','Taube','Datum','Uhrzeit','Details','Notiz'];
+  var csv = '\ufeff';
+  csv += 'PigeonData — Wiegen/Füttern/Tierarzt/Medikation\n';
+  csv += 'Exportiert:;'+new Date().toLocaleString('de')+'\n';
+  csv += 'Benutzer:;'+(CUR_USER ? CUR_USER.name : '')+'\n\n';
+  csv += header.join(';') + '\n';
+  rows.forEach(function(r){ csv += header.map(function(h){ return ('' + (r[h]||'')).replace(/;/g, ','); }).join(';') + '\n'; });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv;charset=utf-8;'}));
+  a.download = 'pigeondata_eintraege_'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+  toast('📊 CSV exportiert!');
+}
+
+function exportMeineLogsPDF() {
+  if (!DB.logs.length) { toast('Keine Einträge zum Exportieren'); return; }
+  var rows = getMeineLogsRows();
+  var rowsHtml = rows.map(function(r) {
+    return '<tr><td style="padding:6px 10px;font-size:11px">'+r.Typ+'</td>'+
+      '<td style="padding:6px 10px;font-size:11px">'+r.Taube+'</td>'+
+      '<td style="padding:6px 10px;font-size:11px">'+r.Datum+'</td>'+
+      '<td style="padding:6px 10px;font-size:11px">'+r.Uhrzeit+'</td>'+
+      '<td style="padding:6px 10px;font-size:11px">'+r.Details+'</td>'+
+      '<td style="padding:6px 10px;font-size:11px">'+r.Notiz+'</td></tr>';
+  }).join('');
+  var html = '<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>PigeonData Einträge</title>'+
+    '<style>body{font-family:Arial,sans-serif;font-size:12px;margin:24px;color:#111}'+
+    'h1{font-size:18px;margin-bottom:4px}'+
+    '.hb{background:#f4f4f8;border:1px solid #ccc;border-radius:6px;padding:14px;margin-bottom:20px}'+
+    'table{width:100%;border-collapse:collapse;border:1px solid #ddd}'+
+    'table th{background:#f4f4f8;text-align:left;padding:6px 10px;font-size:11px}'+
+    'table td{border-bottom:1px solid #eee}'+
+    '@media print{body{margin:10px}}</style></head><body>'+
+    '<div class="hb"><h1>🕊️ PigeonData — Wiegen / Füttern / Tierarzt / Medikation</h1>'+
+    '<p style="color:#555;font-size:12px">Exportiert: '+new Date().toLocaleString('de')+'</p>'+
+    '<p style="font-size:12px"><b>Benutzer:</b> '+(CUR_USER ? CUR_USER.name : '')+'</p></div>'+
+    '<table><thead><tr><th>Typ</th><th>Taube</th><th>Datum</th><th>Uhrzeit</th><th>Details</th><th>Notiz</th></tr></thead><tbody>'+rowsHtml+'</tbody></table>'+
+    '<scr'+'ipt>window.onload=function(){window.print();}<\/scr'+'ipt></body></html>';
+  window.open(URL.createObjectURL(new Blob([html], {type: 'text/html;charset=utf-8'})), '_blank');
+  toast('📄 PDF öffnet sich — Drucken → Als PDF speichern');
+}
+
+// ============================================================
 // STATISTIK-UMBAU: Meine Tauben / Alle Tauben
 // (Gesamt/Ausgewildert/Verstorben/Euthanasiert, nach Ort der Sicherung)
 // ============================================================
@@ -2197,12 +2402,23 @@ function cancelNoteForm() {
 
 function openNoteSheet() {
   var sel = document.getElementById('nf-pig');
+  var label = document.getElementById('nf-pig-label');
   sel.innerHTML = '<option value="">— Keine —</option>';
-  DB.pigeons.forEach(function(p) {
-    var o = document.createElement('option');
-    o.value = p.id; o.textContent = p.name + (p.ring?' ('+p.ring+')':'');
-    sel.appendChild(o);
-  });
+  if (CUR_USER && isAdmin(CUR_USER)) {
+    if (label) label.textContent = 'Verknüpfter User (optional)';
+    USERS.forEach(function(u) {
+      var o = document.createElement('option');
+      o.value = u.id; o.textContent = u.name + (u.username?' (@'+u.username+')':'');
+      sel.appendChild(o);
+    });
+  } else {
+    if (label) label.textContent = 'Verknüpfte Taube (optional)';
+    DB.pigeons.filter(function(p){ return !p.archived; }).forEach(function(p) {
+      var o = document.createElement('option');
+      o.value = p.id; o.textContent = p.name + (p.ring?' ('+p.ring+')':'');
+      sel.appendChild(o);
+    });
+  }
   document.getElementById('nf-date').value = new Date().toISOString().split('T')[0];
   openSheet('sh-note-new');
 }
@@ -2211,11 +2427,14 @@ function saveNote() {
   var text = document.getElementById('nf-text').value.trim();
   if (!text) { alert('Bitte Notiztext eingeben'); return; }
   var editId = document.getElementById('note-edit-id').value;
+  var linkVal = document.getElementById('nf-pig').value;
+  var isAdminNote = CUR_USER && isAdmin(CUR_USER);
   var d = {
     title: document.getElementById('nf-title').value.trim(),
     cat: document.getElementById('nf-cat').value,
     text: text,
-    pigeonId: document.getElementById('nf-pig').value,
+    pigeonId: isAdminNote ? '' : linkVal,
+    linkedUserId: isAdminNote ? linkVal : '',
     date: document.getElementById('nf-date').value,
     updated: new Date().toISOString()
   };
@@ -2243,7 +2462,7 @@ function editNote(id) {
     document.getElementById('nf-title').value = n.title || '';
     document.getElementById('nf-cat').value = n.cat || '';
     document.getElementById('nf-text').value = n.text || '';
-    document.getElementById('nf-pig').value = n.pigeonId || '';
+    document.getElementById('nf-pig').value = n.linkedUserId || n.pigeonId || '';
     document.getElementById('nf-date').value = n.date || '';
   }, 80);
 }
@@ -2265,11 +2484,13 @@ var CAT_COLORS = {
 
 function noteCard(n) {
   var pig = n.pigeonId ? DB.pigeons.find(function(p){return p.id===n.pigeonId;}) : null;
+  var linkedUser = n.linkedUserId ? USERS.find(function(u){return u.id===n.linkedUserId;}) : null;
   var catStyle = n.cat && CAT_COLORS[n.cat] ? 'background:'+CAT_COLORS[n.cat] : 'background:rgba(122,122,154,.15);color:var(--mu)';
   return '<div class="lentry">' +
     '<div class="lhdr">' +
       (n.cat ? '<div class="ltag" style="'+catStyle+'">'+n.cat+'</div>' : '') +
       (pig ? '<span style="font-size:12px;color:var(--mu)">🕊️ '+pig.name+'</span>' : '') +
+      (linkedUser ? '<span style="font-size:12px;color:var(--mu)">👤 '+linkedUser.name+'</span>' : '') +
       '<div class="ldate">'+(n.date||'')+'</div>' +
     '</div>' +
     (n.title ? '<div style="font-weight:600;font-size:15px;margin-bottom:6px">'+n.title+'</div>' : '') +
@@ -2585,13 +2806,13 @@ function setAdminTab(tab, el) {
   CUR_ADMIN_TAB = tab;
   document.querySelectorAll('#admin-tabs .tab').forEach(function(t){t.classList.remove('on');});
   if (el) el.classList.add('on');
-  ['users','messages','overview'].forEach(function(t){
+  ['users','messages','tasks'].forEach(function(t){
     var el2 = document.getElementById('admin-tab-'+t);
     if (el2) el2.style.display = (t===tab)?'block':'none';
   });
   if (tab==='users') renderAdminUsers();
   if (tab==='messages') renderAdminMessages();
-  if (tab==='overview') renderAdminOverview();
+  if (tab==='tasks') renderAdminTasks();
 }
 
 function closeUserSettings() { cs('sh-user-settings'); }
@@ -2611,6 +2832,7 @@ function renderAdminUsers() {
     var role = isAdmin(u) ? '<span style="color:var(--acc);font-size:12px">👑 Admin</span>' : '<span style="color:var(--mu);font-size:12px">👤 Benutzer</span>';
     var actions = (u.id !== CUR_USER.id)
       ? '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+          '<button class="bexport" style="width:auto;padding:6px 10px;font-size:12px" onclick="openAdminEditName(&quot;'+u.id+'&quot;)">✏️ Name ändern</button>'+
           '<button class="bexport" style="width:auto;padding:6px 10px;font-size:12px" onclick="openAdminResetPassword(&quot;'+u.id+'&quot;)">🔑 PW zurücksetzen</button>'+
           '<button class="ldel" style="width:auto;padding:6px 10px;font-size:12px" onclick="adminDeleteUser(&quot;'+u.id+'&quot;)">🗑️ Löschen</button>'+
         '</div>'
@@ -2627,6 +2849,36 @@ function renderAdminUsers() {
       '<div style="margin-top:10px">'+actions+'</div>'+
     '</div>';
   }).join('');
+}
+
+function openAdminEditName(userId) {
+  var u = USERS.find(function(x){ return x.id === userId; }); if (!u) return;
+  document.getElementById('aen-user-id').value = userId;
+  document.getElementById('aen-name').value = u.name || '';
+  document.getElementById('aen-error').textContent = '';
+  openSheet('sh-admin-edit-name');
+}
+
+async function saveAdminEditName() {
+  var userId = document.getElementById('aen-user-id').value;
+  var name = document.getElementById('aen-name').value.trim();
+  var errEl = document.getElementById('aen-error');
+  errEl.textContent = '';
+  if (!name) { errEl.textContent = 'Bitte Namen eingeben'; return; }
+  showLoading('Speichern…');
+  try {
+    var { error } = await sb.from('profiles').update({ full_name: name }).eq('id', userId);
+    if (error) { hideLoading(); errEl.textContent = '❌ ' + error.message; return; }
+    var u = USERS.find(function(x){ return x.id === userId; });
+    if (u) u.name = name;
+    hideLoading();
+    cs('sh-admin-edit-name');
+    toast('✅ Name aktualisiert');
+    renderAdminUsers();
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = '❌ ' + e.message;
+  }
 }
 
 function renderAdminMessages() {
@@ -2670,8 +2922,166 @@ function checkUnreadMessages() {
   renderInbox();
 }
 
-function renderAdminOverview() {
-  renderAdminStats();
+var TASKS_CACHE = null; // Array | null (null = noch nicht geladen / Fehler)
+
+function taskPriorityRank(p) {
+  return { dringend:4, hoch:3, mittel:2, niedrig:1 }[p] || 0;
+}
+
+function sortTasks(list) {
+  return list.slice().sort(function(a,b) {
+    if ((a.status==='erledigt') !== (b.status==='erledigt')) return a.status==='erledigt' ? 1 : -1;
+    var pr = taskPriorityRank(b.priority) - taskPriorityRank(a.priority);
+    if (pr !== 0) return pr;
+    var da = a.due_date || '9999-99-99', db = b.due_date || '9999-99-99';
+    return da < db ? -1 : da > db ? 1 : 0;
+  });
+}
+
+async function loadTasks(force) {
+  if (TASKS_CACHE && !force) return TASKS_CACHE;
+  if (!sb || !SB_USER) return [];
+  try {
+    var res = await sb.from('tasks').select('*').order('created_at', {ascending:false});
+    if (res.error) throw res.error;
+    TASKS_CACHE = res.data || [];
+  } catch (e) {
+    console.warn('Aufgaben laden fehlgeschlagen:', e.message);
+    TASKS_CACHE = [];
+  }
+  return TASKS_CACHE;
+}
+
+function taskPriorityBadge(p) {
+  var map = { dringend:['var(--red)','🔴 Dringend'], hoch:['var(--orn)','🟠 Hoch'], mittel:['var(--acc)','🟡 Mittel'], niedrig:['var(--mu)','⚪ Niedrig'] };
+  var m = map[p] || map.mittel;
+  return '<span class="badge" style="background:'+m[0]+'22;color:'+m[0]+'">'+m[1]+'</span>';
+}
+
+function taskCard(t) {
+  var u = t.linked_user_id ? USERS.find(function(x){return x.id===t.linked_user_id;}) : null;
+  var due = t.due_date ? new Date(t.due_date).toLocaleDateString('de-AT') : 'Kein Termin';
+  var doneStyle = t.status === 'erledigt' ? 'opacity:.55' : '';
+  var titleStyle = t.status === 'erledigt' ? 'text-decoration:line-through' : '';
+  return '<div class="lentry" style="'+doneStyle+'">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+      '<div style="flex:1">'+
+        '<div style="font-weight:600;font-size:15px;'+titleStyle+'">'+t.title+'</div>'+
+        (t.text ? '<div style="font-size:13px;color:var(--mu);margin-top:2px;white-space:pre-wrap">'+t.text+'</div>' : '')+
+        '<div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+          taskPriorityBadge(t.priority)+
+          '<span style="font-size:12px;color:var(--mu)">📅 '+due+'</span>'+
+          (u ? '<span style="font-size:12px;color:var(--mu)">👤 '+u.name+'</span>' : '')+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:4px;flex-shrink:0">'+
+        '<button onclick="toggleTaskDone(&quot;'+t.id+'&quot;)" title="Erledigt/Offen" style="background:transparent;border:none;font-size:17px;cursor:pointer">'+(t.status==='erledigt'?'↩️':'✅')+'</button>'+
+        '<button onclick="openTaskSheet(&quot;'+t.id+'&quot;)" title="Bearbeiten" style="background:transparent;border:none;font-size:17px;cursor:pointer">✏️</button>'+
+        '<button onclick="deleteTask(&quot;'+t.id+'&quot;)" title="Löschen" style="background:transparent;border:none;color:var(--red);font-size:17px;cursor:pointer">🗑</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+async function renderAdminTasks() {
+  var list = document.getElementById('admin-task-list'); if (!list) return;
+  list.innerHTML = '<div class="empty"><div class="ei">⏳</div><p>Lädt…</p></div>';
+  var tasks = await loadTasks();
+  if (!tasks.length) { list.innerHTML = '<div class="empty"><div class="ei">✅</div><p>Keine Aufgaben vorhanden.</p></div>'; return; }
+  list.innerHTML = sortTasks(tasks).map(taskCard).join('');
+}
+
+async function renderHomeTaskBanner() {
+  var banner = document.getElementById('home-task-banner'); if (!banner) return;
+  var tasks = await loadTasks();
+  var open = sortTasks(tasks.filter(function(t){ return t.status !== 'erledigt'; }));
+  if (!open.length) { banner.style.display = 'none'; return; }
+  var t = open[0];
+  var due = t.due_date ? new Date(t.due_date).toLocaleDateString('de-AT') : 'Kein Termin';
+  banner.innerHTML = '<div class="cwrap" style="margin-bottom:16px;cursor:pointer" onclick="goPage(\'admin\');setAdminTab(\'tasks\', document.querySelectorAll(\'#admin-tabs .tab\')[2])">'+
+    '<div class="ctit">⏰ Wichtigste Aufgabe</div>'+
+    '<div style="font-weight:600;font-size:15px">'+t.title+'</div>'+
+    '<div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+      taskPriorityBadge(t.priority)+
+      '<span style="font-size:12px;color:var(--mu)">📅 '+due+'</span>'+
+    '</div>'+
+  '</div>';
+  banner.style.display = 'block';
+}
+
+function openTaskSheet(id) {
+  var t = id ? (TASKS_CACHE||[]).find(function(x){return x.id===id;}) : null;
+  document.getElementById('task-edit-id').value = id || '';
+  document.getElementById('tf-title').value = t ? t.title : '';
+  document.getElementById('tf-text').value = t ? (t.text||'') : '';
+  document.getElementById('tf-priority').value = t ? t.priority : 'mittel';
+  document.getElementById('tf-due').value = t ? (t.due_date||'') : '';
+  var sel = document.getElementById('tf-user');
+  sel.innerHTML = '<option value="">— Keine —</option>';
+  USERS.forEach(function(u) {
+    var o = document.createElement('option'); o.value = u.id; o.textContent = u.name; sel.appendChild(o);
+  });
+  sel.value = (t && t.linked_user_id) ? t.linked_user_id : '';
+  document.getElementById('task-sheet-title').textContent = id ? '✏️ Aufgabe bearbeiten' : '➕ Neue Aufgabe';
+  openSheet('sh-task');
+}
+
+async function saveTask() {
+  var title = document.getElementById('tf-title').value.trim();
+  if (!title) { alert('Bitte Titel eingeben'); return; }
+  var id = document.getElementById('task-edit-id').value;
+  var d = {
+    title: title,
+    text: document.getElementById('tf-text').value.trim(),
+    priority: document.getElementById('tf-priority').value,
+    due_date: document.getElementById('tf-due').value || null,
+    linked_user_id: document.getElementById('tf-user').value || null
+  };
+  showLoading('Speichern…');
+  try {
+    if (id) {
+      var r1 = await sb.from('tasks').update(d).eq('id', id);
+      if (r1.error) throw r1.error;
+      toast('✅ Aufgabe aktualisiert!');
+    } else {
+      d.status = 'offen';
+      d.created_by = CUR_USER.id;
+      var r2 = await sb.from('tasks').insert(d);
+      if (r2.error) throw r2.error;
+      toast('➕ Aufgabe angelegt!');
+    }
+    hideLoading();
+    cs('sh-task');
+    await loadTasks(true);
+    renderAdminTasks();
+    renderHomeTaskBanner();
+  } catch (e) {
+    hideLoading();
+    alert('❌ ' + e.message);
+  }
+}
+
+async function toggleTaskDone(id) {
+  var t = (TASKS_CACHE||[]).find(function(x){return x.id===id;}); if (!t) return;
+  var newStatus = t.status === 'erledigt' ? 'offen' : 'erledigt';
+  try {
+    var { error } = await sb.from('tasks').update({status:newStatus}).eq('id', id);
+    if (error) throw error;
+    await loadTasks(true);
+    renderAdminTasks();
+    renderHomeTaskBanner();
+  } catch (e) { alert('❌ ' + e.message); }
+}
+
+async function deleteTask(id) {
+  if (!confirm('Aufgabe wirklich löschen?')) return;
+  try {
+    var { error } = await sb.from('tasks').delete().eq('id', id);
+    if (error) throw error;
+    await loadTasks(true);
+    renderAdminTasks();
+    renderHomeTaskBanner();
+  } catch (e) { alert('❌ ' + e.message); }
 }
 
 function getAdminExportData() {
@@ -2962,6 +3372,38 @@ async function doLogin() {
       return;
     }
     await onAuthSuccess(data.user);
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = '❌ ' + e.message;
+  }
+}
+
+function openForgotPasswordSheet() {
+  document.getElementById('fp-username').value = '';
+  document.getElementById('fp-error').textContent = '';
+  openSheet('sh-forgot-pw');
+}
+
+async function sendPasswordReset() {
+  var username = document.getElementById('fp-username').value.trim();
+  var errEl = document.getElementById('fp-error');
+  errEl.textContent = '';
+  if (!username) { errEl.textContent = 'Bitte Benutzername eingeben'; return; }
+  if (!sb) { errEl.textContent = 'Verbindung nicht verfügbar'; return; }
+  showLoading('Sende E-Mail…');
+  try {
+    var { data: email, error: lookupErr } = await sb.rpc('get_email_for_username', { p_username: username });
+    if (lookupErr || !email) {
+      hideLoading();
+      cs('sh-forgot-pw');
+      toast('📧 Falls der Benutzername existiert, wurde eine E-Mail versendet.');
+      return;
+    }
+    var { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+    hideLoading();
+    if (error) { errEl.textContent = '❌ ' + error.message; return; }
+    cs('sh-forgot-pw');
+    toast('📧 E-Mail mit Link zum Zurücksetzen wurde versendet!');
   } catch (e) {
     hideLoading();
     errEl.textContent = '❌ ' + e.message;
@@ -3847,6 +4289,15 @@ async function sbInit() {
       renderLoginScreen();
       injectAuthUI();
     }
+    if (event === 'PASSWORD_RECOVERY' && session && session.user) {
+      showLoading('Bitte warten…');
+      SB_USER = session.user;
+      await loadUsers();
+      var profile = USERS.find(function(u){ return u.id === session.user.id; });
+      CUR_USER = profile || { id: session.user.id, name: session.user.email.split('@')[0], email: session.user.email };
+      hideLoading();
+      showForcePasswordScreen();
+    }
   });
 }
 
@@ -3981,6 +4432,7 @@ async function sbInit() {
   // mit einer rein selbstgebauten Pointer-Auswertung auf Touchscreens unzuverlässig.
   fab.addEventListener('click', function(e) {
     if (suppressNextClick) { suppressNextClick = false; return; }
+    renderFabMenu();
     openSheet('sh-fab');
   });
 
