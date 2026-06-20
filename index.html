@@ -321,6 +321,45 @@ select.fi option{background:var(--sur);color:var(--tx)}
  </div>
 </div>
 
+<!-- TREATMENT INFO POPUP (User: erscheint bei Auswahl von Symptom/Krankheit) -->
+<div class="overlay" id="sh-treatment-info" onclick="oc(event,'sh-treatment-info')" style="z-index:1400">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit" id="ti-title">💊 Behandlungsempfehlung</div>
+  <input type="hidden" id="ti-current-name">
+  <div id="ti-body" style="margin-bottom:14px"></div>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin-bottom:16px;cursor:pointer">
+    <input type="checkbox" id="ti-hide-checkbox" style="width:auto">
+    Diesen Hinweis für mich nicht mehr anzeigen
+  </label>
+  <button class="btn1" onclick="closeTreatmentInfoSheet()">Verstanden</button>
+ </div>
+</div>
+
+<!-- TREATMENT EDIT SHEET (Admin: Behandlungsempfehlung anlegen/bearbeiten) -->
+<div class="overlay" id="sh-treatment-edit" onclick="oc(event,'sh-treatment-edit')">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit" id="te-sheet-title">➕ Neuer Eintrag</div>
+  <input type="hidden" id="te-edit-id">
+  <div class="fg"><label class="fl">Bezeichnung (Symptom / Krankheit / Parasit)</label><input class="fi" id="te-name" type="text" placeholder="z.B. Kokzidien"></div>
+  <div class="fg"><label class="fl">Kategorie</label>
+    <select class="fi" id="te-category">
+      <option value="symptom">Symptom</option>
+      <option value="krankheit">Krankheit / Parasit</option>
+    </select>
+  </div>
+  <div class="fg"><label class="fl">Medikament</label><input class="fi" id="te-medikament" type="text" placeholder="z.B. Appercox Tabletten"></div>
+  <div class="fg"><label class="fl">Dosis</label><input class="fi" id="te-dosis" type="text" placeholder="z.B. 0,1 ml pro 100g Taube"></div>
+  <div class="fg"><label class="fl">Verabreichung</label><input class="fi" id="te-verabreichung" type="text" placeholder="z.B. ins Trinkwasser"></div>
+  <div class="fg"><label class="fl">Medikationsdauer</label><input class="fi" id="te-dauer" type="text" placeholder="z.B. 5 Tage, danach wiederholen"></div>
+  <div class="fg"><label class="fl">Nachbehandlung (z.B. Supplement)</label><input class="fi" id="te-nachbehandlung" type="text" placeholder="z.B. Nekton B nach Abklingen"></div>
+  <button class="btn1" onclick="saveTreatmentInfo()">Speichern</button>
+  <button class="btn2" onclick="cs('sh-treatment-edit')">Abbrechen</button>
+  <div id="te-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
+ </div>
+</div>
+
 <!-- ADMIN EDIT NAME SHEET -->
 <div class="overlay" id="sh-admin-edit-name" onclick="oc(event,'sh-admin-edit-name')" style="z-index:1002">
  <div class="sheet">
@@ -639,6 +678,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <div class="tab on" onclick="setAdminTab('users',this)">👥 User</div>
     <div class="tab" onclick="setAdminTab('messages',this)">✉️ Nachrichten</div>
     <div class="tab" onclick="setAdminTab('tasks',this)">✅ Aufgaben</div>
+    <div class="tab" onclick="setAdminTab('info',this)">📋 Infos</div>
   </div>
 
   <!-- USERS TAB -->
@@ -667,6 +707,13 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div id="admin-tab-tasks" style="display:none">
     <button class="btn1" style="margin-bottom:16px" onclick="openTaskSheet(null)">＋ Neue Aufgabe</button>
     <div id="admin-task-list"></div>
+  </div>
+
+  <!-- INFO TAB (Behandlungsempfehlungen für Symptome/Krankheiten) -->
+  <div id="admin-tab-info" style="display:none">
+    <p style="color:var(--mu);font-size:13px;margin-bottom:14px">Diese Behandlungsempfehlungen werden Usern angezeigt, sobald sie im Taubenprofil das jeweilige Symptom bzw. die Krankheit/den Parasiten auswählen.</p>
+    <button class="btn1" style="margin-bottom:16px" onclick="openTreatmentEditSheet(null)">＋ Neuer Eintrag</button>
+    <div id="admin-info-list"></div>
   </div>
 </div>
 
@@ -1151,8 +1198,12 @@ function oc(e, id) { if (e.target.classList.contains('overlay')) cs(id); }
 // CHIPS
 // ============================================================
 function tc(el) {
+  var turningOn = !el.classList.contains('on');
   el.classList.toggle('on');
   if (el.parentElement && el.parentElement.id === 'lf-mname') renderMedDosageFields();
+  if (turningOn && el.parentElement && (el.parentElement.id === 'pf-symp' || el.parentElement.id === 'pf-dis')) {
+    maybeShowTreatmentInfo(el.textContent.trim());
+  }
 }
 // ============================================================
 // GEBURTSJAHR DROPDOWN
@@ -1810,6 +1861,181 @@ function fillStatsPigFilter() {
       if (p.id === cur) o.selected = true;
       sel.appendChild(o);
     });
+  }
+}
+
+// ============================================================
+// BEHANDLUNGSINFOS (Symptome/Krankheiten -> Medikament/Dosis/...)
+// ============================================================
+var TREATMENT_INFO = {};      // name -> {id, category, medikament, dosis, verabreichung, dauer, nachbehandlung}
+var TREATMENT_INFO_LIST = []; // Rohliste für die Admin-Verwaltung
+
+async function loadTreatmentInfo() {
+  TREATMENT_INFO = {};
+  TREATMENT_INFO_LIST = [];
+  if (!sb || !SB_USER) return;
+  try {
+    var res = await sb.from('treatment_info').select('*').order('name');
+    if (res.error) throw res.error;
+    TREATMENT_INFO_LIST = res.data || [];
+    TREATMENT_INFO_LIST.forEach(function(r) { TREATMENT_INFO[r.name] = r; });
+  } catch (e) {
+    console.warn('Behandlungsinfos laden fehlgeschlagen:', e.message);
+  }
+}
+
+function maybeShowTreatmentInfo(name) {
+  if (!CUR_USER) return;
+  var hidden = CUR_USER.hiddenInfo || [];
+  if (hidden.indexOf(name) >= 0) return;
+  showTreatmentInfoSheet(name, TREATMENT_INFO[name]);
+}
+
+function showTreatmentInfoSheet(name, info) {
+  document.getElementById('ti-title').textContent = '💊 ' + name;
+  document.getElementById('ti-current-name').value = name;
+  document.getElementById('ti-hide-checkbox').checked = false;
+  var body = document.getElementById('ti-body');
+  function row(label, val) {
+    return val ? '<div class="fg"><label class="fl">'+label+'</label><div style="font-size:14px;line-height:1.5">'+val+'</div></div>' : '';
+  }
+  if (info && (info.medikament||info.dosis||info.verabreichung||info.dauer||info.nachbehandlung)) {
+    body.innerHTML =
+      row('Medikament', info.medikament) +
+      row('Dosis', info.dosis) +
+      row('Verabreichung', info.verabreichung) +
+      row('Medikationsdauer', info.dauer) +
+      row('Nachbehandlung', info.nachbehandlung);
+  } else {
+    body.innerHTML = '<p style="color:var(--mu);font-size:14px">In Arbeit — für „'+name+'" liegt noch keine Behandlungsempfehlung vor.</p>';
+  }
+  openSheet('sh-treatment-info');
+}
+
+async function closeTreatmentInfoSheet() {
+  var name = document.getElementById('ti-current-name').value;
+  var hide = document.getElementById('ti-hide-checkbox').checked;
+  cs('sh-treatment-info');
+  if (hide && CUR_USER) {
+    CUR_USER.hiddenInfo = CUR_USER.hiddenInfo || [];
+    if (CUR_USER.hiddenInfo.indexOf(name) < 0) {
+      CUR_USER.hiddenInfo.push(name);
+      try {
+        if (sb && SB_USER) await sb.from('profiles').update({ hidden_info: CUR_USER.hiddenInfo }).eq('id', CUR_USER.id);
+      } catch (e) { console.warn('hidden_info konnte nicht gespeichert werden:', e.message); }
+    }
+  }
+}
+
+async function resetTreatmentInfoHints() {
+  if (!CUR_USER) return;
+  CUR_USER.hiddenInfo = [];
+  try {
+    if (sb && SB_USER) await sb.from('profiles').update({ hidden_info: [] }).eq('id', CUR_USER.id);
+    toast('✅ Hinweise werden wieder angezeigt');
+  } catch (e) {
+    toast('❌ ' + e.message);
+  }
+}
+
+// --- Admin: Verwaltung der Behandlungsinfos ---
+function renderAdminTreatmentInfo() {
+  var list = document.getElementById('admin-info-list'); if (!list) return;
+  if (!TREATMENT_INFO_LIST.length) { list.innerHTML = '<div class="empty"><div class="ei">📋</div><p>Noch keine Einträge vorhanden.</p></div>'; return; }
+  var byCat = { symptom: [], krankheit: [] };
+  TREATMENT_INFO_LIST.forEach(function(r){ (byCat[r.category]||byCat.krankheit).push(r); });
+  function section(title, rows) {
+    if (!rows.length) return '';
+    return '<div class="stit2" style="margin:14px 0 8px">'+title+'</div>' + rows.map(function(r) {
+      var hasInfo = r.medikament||r.dosis||r.verabreichung||r.dauer||r.nachbehandlung;
+      return '<div class="lentry">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+          '<div style="flex:1">'+
+            '<div style="font-weight:600;font-size:14px">'+r.name+'</div>'+
+            (hasInfo ? '<div style="font-size:12px;color:var(--mu);margin-top:2px">'+(r.medikament||'—')+'</div>' : '<div style="font-size:12px;color:var(--orn);margin-top:2px">In Arbeit</div>')+
+          '</div>'+
+          '<div style="display:flex;gap:4px;flex-shrink:0">'+
+            '<button onclick="openTreatmentEditSheet(&quot;'+r.id+'&quot;)" style="background:transparent;border:none;font-size:16px;cursor:pointer">✏️</button>'+
+            '<button onclick="deleteTreatmentInfo(&quot;'+r.id+'&quot;)" style="background:transparent;border:none;color:var(--red);font-size:16px;cursor:pointer">🗑</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+  list.innerHTML = section('Symptome', byCat.symptom) + section('Krankheiten / Parasiten', byCat.krankheit);
+}
+
+function openTreatmentEditSheet(id) {
+  var r = id ? TREATMENT_INFO_LIST.find(function(x){return x.id===id;}) : null;
+  document.getElementById('te-edit-id').value = id || '';
+  document.getElementById('te-name').value = r ? r.name : '';
+  document.getElementById('te-category').value = r ? r.category : 'symptom';
+  document.getElementById('te-medikament').value = r ? (r.medikament||'') : '';
+  document.getElementById('te-dosis').value = r ? (r.dosis||'') : '';
+  document.getElementById('te-verabreichung').value = r ? (r.verabreichung||'') : '';
+  document.getElementById('te-dauer').value = r ? (r.dauer||'') : '';
+  document.getElementById('te-nachbehandlung').value = r ? (r.nachbehandlung||'') : '';
+  document.getElementById('te-error').textContent = '';
+  document.getElementById('te-sheet-title').textContent = id ? '✏️ Eintrag bearbeiten' : '➕ Neuer Eintrag';
+  openSheet('sh-treatment-edit');
+}
+
+async function saveTreatmentInfo() {
+  var name = document.getElementById('te-name').value.trim();
+  var errEl = document.getElementById('te-error');
+  errEl.textContent = '';
+  if (!name) { errEl.textContent = 'Bitte Bezeichnung eingeben'; return; }
+  var id = document.getElementById('te-edit-id').value;
+  var d = {
+    name: name,
+    category: document.getElementById('te-category').value,
+    medikament: document.getElementById('te-medikament').value.trim(),
+    dosis: document.getElementById('te-dosis').value.trim(),
+    verabreichung: document.getElementById('te-verabreichung').value.trim(),
+    dauer: document.getElementById('te-dauer').value.trim(),
+    nachbehandlung: document.getElementById('te-nachbehandlung').value.trim()
+  };
+  showLoading('Speichern…');
+  try {
+    if (id) {
+      var r1 = await sb.from('treatment_info').update(d).eq('id', id);
+      if (r1.error) throw r1.error;
+    } else {
+      var r2 = await sb.from('treatment_info').insert(d);
+      if (r2.error) throw r2.error;
+    }
+    await loadTreatmentInfo();
+    hideLoading();
+    cs('sh-treatment-edit');
+    toast('✅ Gespeichert');
+    renderAdminTreatmentInfo();
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = '❌ ' + e.message;
+  }
+}
+
+async function deleteTreatmentInfo(id) {
+  if (!confirm('Diesen Eintrag wirklich löschen?')) return;
+  try {
+    var { error } = await sb.from('treatment_info').delete().eq('id', id);
+    if (error) throw error;
+    await loadTreatmentInfo();
+    renderAdminTreatmentInfo();
+    toast('🗑️ Gelöscht');
+  } catch (e) { toast('❌ ' + e.message); }
+}
+
+// --- Benutzerhandbuch (Päppel-Handout PDF) ---
+// Hinweis: Die Datei muss einmalig in den Supabase Storage hochgeladen werden;
+// die dabei erzeugte öffentliche URL hier eintragen.
+var PAEPPEL_HANDOUT_URL = 'https://vuenlryuxivpercujjqr.supabase.co/storage/v1/object/public/Dokumente%20(public)/Paeppel-Handout_Merkblatt_Krankheiten_Dosierungen_March2026.pdf';
+
+function openHandbuch() {
+  if (PAEPPEL_HANDOUT_URL) {
+    window.open(PAEPPEL_HANDOUT_URL, '_blank');
+  } else {
+    toast('📘 Handbuch ist noch nicht hinterlegt');
   }
 }
 
@@ -3315,13 +3541,14 @@ function setAdminTab(tab, el) {
   CUR_ADMIN_TAB = tab;
   document.querySelectorAll('#admin-tabs .tab').forEach(function(t){t.classList.remove('on');});
   if (el) el.classList.add('on');
-  ['users','messages','tasks'].forEach(function(t){
+  ['users','messages','tasks','info'].forEach(function(t){
     var el2 = document.getElementById('admin-tab-'+t);
     if (el2) el2.style.display = (t===tab)?'block':'none';
   });
   if (tab==='users') renderAdminUsers();
   if (tab==='messages') renderAdminMessages();
   if (tab==='tasks') renderAdminTasks();
+  if (tab==='info') renderAdminTreatmentInfo();
 }
 
 function closeUserSettings() { cs('sh-user-settings'); }
@@ -3734,9 +3961,8 @@ async function finishLogin(u) {
   // dann erst rendern – sonst zeigt die Startseite kurz 0 Tauben/Einträge an,
   // weil DB zu diesem Zeitpunkt noch leer ist.
   await loadDB();
-  if (isAdmin(u)) {
-    goPage('home', document.querySelector('.ni'));
-  }
+  await loadTreatmentInfo();
+  goPage('home', document.querySelector('.ni'));
   renderHome();
 }
 
@@ -3820,6 +4046,8 @@ function openUserSettings() {
     '<div class="hrow" onclick="openChangePasswordSheet()"><div class="hi">🔑</div><div class="hinfo"><div class="ht">Passwort ändern</div><div class="hs2">Eigenes Passwort aktualisieren</div></div></div>'+
     (isAdmin(CUR_USER)?'<div class="hrow" onclick="adminCreateUser()"><div class="hi">➕</div><div class="hinfo"><div class="ht">Neuen Benutzer anlegen</div><div class="hs2">Benutzername, E-Mail & vorl. Passwort vergeben</div></div></div>':'')+
     '<div class="hrow" onclick="exportOwnBackup()"><div class="hi">💾</div><div class="hinfo"><div class="ht">Datensicherung</div><div class="hs2">Eigene Daten als Datei exportieren</div></div></div>'+
+    '<div class="hrow" onclick="openHandbuch()"><div class="hi">📘</div><div class="hinfo"><div class="ht">Benutzerhandbuch</div><div class="hs2">Päppel-Handout als PDF öffnen</div></div></div>'+
+    '<div class="hrow" onclick="resetTreatmentInfoHints()"><div class="hi">🔄</div><div class="hinfo"><div class="ht">Behandlungs-Hinweise zurücksetzen</div><div class="hs2">Ausgeblendete Infofenster wieder einblenden</div></div></div>'+
     '<div class="dvd"></div>'+
     '<div class="hrow" onclick="logoutUser()"><div class="hi">🚪</div><div class="hinfo"><div class="ht">Abmelden</div><div class="hs2">Zurück zum Login</div></div></div>'+
     (!isAdmin(CUR_USER)?'<div class="hrow" onclick="deleteUserConfirm()"><div class="hi">🗑️</div><div class="hinfo"><div class="ht" style="color:var(--red)">Profil löschen</div><div class="hs2">Account und alle Daten entfernen</div></div></div>':'');
@@ -4169,6 +4397,7 @@ async function loadUsers() {
       role:  row.role || 'user',
       email: row.email || '',
       project: row.project || '', // Projektzugehörigkeit
+      hiddenInfo: row.hidden_info || [], // ausgeblendete Behandlungs-Hinweise
       must_change_pw: !!row.must_change_pw
     }));
   } catch (e) {
