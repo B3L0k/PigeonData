@@ -1893,13 +1893,13 @@ function pigListHtml(list) {
 
 function onAdminPigSubviewChange() {
   var sv = document.getElementById('admin-pig-subview').value;
-  document.getElementById('admin-pig-filter-status-wrap').style.display = (sv==='alle'||sv==='fundort'||sv==='taubenschlaege') ? 'block' : 'none';
-  document.getElementById('admin-pig-filter-loft-wrap').style.display = (sv==='fundort') ? 'block' : 'none';
+  document.getElementById('admin-pig-filter-status-wrap').style.display = 'block';
+  document.getElementById('admin-pig-filter-loft-wrap').style.display = 'block';
   document.getElementById('admin-pig-filter-disease-wrap').style.display = (sv==='krankheiten') ? 'block' : 'none';
   document.getElementById('admin-pig-filter-med-wrap').style.display = (sv==='medikamente') ? 'block' : 'none';
   document.getElementById('admin-pig-filter-release-city-wrap').style.display = (sv==='auswilderung') ? 'block' : 'none';
 
-  if (sv === 'fundort') fillSelectOptions('admin-pig-filter-loft', distinctValues(DB.pigeons, 'foundLoft'));
+  fillSelectOptions('admin-pig-filter-loft', distinctValues(DB.pigeons, 'foundLoft'));
   if (sv === 'krankheiten') {
     var diseases = {};
     DB.pigeons.forEach(function(p){ [].concat(p.diseases||[], p.dis2?[p.dis2]:[]).forEach(function(d){ if(d) diseases[d]=true; }); });
@@ -1920,7 +1920,15 @@ function renderAdminPigStats() {
   var content = document.getElementById('admin-pig-content'); if (!content) return;
   var sv = document.getElementById('admin-pig-subview').value;
   var statusFilter = document.getElementById('admin-pig-filter-status').value;
+  var loftFilter = document.getElementById('admin-pig-filter-loft').value;
+  var filterLabel = (statusFilter?' — Status: '+statusFilter:'') + (loftFilter?' — Taubenschlag: '+loftFilter:'');
+
+  // Status- und Taubenschlag-Filter gelten generell für alle Ansichten (Taubenschlag bezieht
+  // sich dabei auf den Taubenschlag am Ort der Sicherung, "foundLoft").
   var all = DB.pigeons;
+  if (statusFilter) all = all.filter(function(p){ return (p.health||'Gesund')===statusFilter; });
+  if (loftFilter) all = all.filter(function(p){ return p.foundLoft===loftFilter; });
+
   var html = '';
 
   if (sv === 'alle') {
@@ -1929,20 +1937,15 @@ function renderAdminPigStats() {
       numBox('Gesamt', all.length, 'var(--acc)') +
       ['Gesund','Krank','Verstorben','Euthanasiert'].map(function(h){ return numBox(h, counts[h]||0, ADMIN_STATUS_COLORS[h]); }).join('') +
     '</div>';
-    var filtered = statusFilter ? all.filter(function(p){ return (p.health||'Gesund')===statusFilter; }) : all;
-    html += '<div class="ctit" style="margin:4px 0 8px">'+(statusFilter||'Alle')+' ('+filtered.length+')</div>' + pigListHtml(filtered);
+    html += '<div class="ctit" style="margin:4px 0 8px">'+(statusFilter||'Alle')+' ('+all.length+')</div>' + pigListHtml(all);
     content.innerHTML = html;
-    ADMIN_PIG_EXPORT = { title: 'Alle Tauben' + (statusFilter?' — '+statusFilter:''), rows: pigeonRowsForExport(filtered) };
+    ADMIN_PIG_EXPORT = { title: 'Alle Tauben' + filterLabel, rows: pigeonRowsForExport(all) };
 
   } else if (sv === 'fundort') {
-    var loftFilter = document.getElementById('admin-pig-filter-loft').value;
-    var list = all;
-    if (statusFilter) list = list.filter(function(p){ return (p.health||'Gesund')===statusFilter; });
-    if (loftFilter) list = list.filter(function(p){ return p.foundLoft===loftFilter; });
     var byCity = {};
-    list.forEach(function(p){ var c = p.foundCity || 'Unbekannt'; (byCity[c]=byCity[c]||[]).push(p); });
+    all.forEach(function(p){ var c = p.foundCity || 'Unbekannt'; (byCity[c]=byCity[c]||[]).push(p); });
     var cities = Object.keys(byCity).sort(function(a,b){ return byCity[b].length - byCity[a].length; });
-    html = '<div class="ctit" style="margin-bottom:8px">Gesamt: '+list.length+' Tauben in '+cities.length+' Städten</div>';
+    html = '<div class="ctit" style="margin-bottom:8px">Gesamt: '+all.length+' Tauben in '+cities.length+' Städten</div>';
     if (!cities.length) html += '<p style="color:var(--mu);font-size:13px">Keine Tauben für diese Auswahl</p>';
     cities.forEach(function(city) {
       var c = pigeonHealthCounts(byCity[city]);
@@ -1959,7 +1962,7 @@ function renderAdminPigStats() {
     });
     content.innerHTML = html;
     ADMIN_PIG_EXPORT = {
-      title: 'Nach Fundort (Stadt)' + (statusFilter?' — '+statusFilter:'') + (loftFilter?' — Taubenschlag: '+loftFilter:''),
+      title: 'Nach Fundort (Stadt)' + filterLabel,
       rows: cities.map(function(city){ var c = pigeonHealthCounts(byCity[city]); return { Stadt: city, Gesamt: byCity[city].length, Gesund: c.Gesund, Krank: c.Krank, Verstorben: c.Verstorben, Euthanasiert: c.Euthanasiert }; })
     };
 
@@ -1976,7 +1979,7 @@ function renderAdminPigStats() {
     html += '<div class="cwrap"><div class="ctit">📍 Nach Auswilderungsort (Stadt)</div>' + adminBarList(byRCity) + '</div>';
     html += '<div class="cwrap"><div class="ctit">🏠 Nach Taubenschlag (Auswilderung)</div>' + adminBarList(byRLoft) + '</div>';
     content.innerHTML = html;
-    ADMIN_PIG_EXPORT = { title: 'Auswilderung & Auswilderungsort' + (releaseCityFilter?' — '+releaseCityFilter:''), rows: Object.keys(byRCity).map(function(c){ return { Auswilderungsort: c, Anzahl: byRCity[c] }; }) };
+    ADMIN_PIG_EXPORT = { title: 'Auswilderung & Auswilderungsort' + filterLabel + (releaseCityFilter?' — Auswilderungsort: '+releaseCityFilter:''), rows: Object.keys(byRCity).map(function(c){ return { Auswilderungsort: c, Anzahl: byRCity[c] }; }) };
 
   } else if (sv === 'krankheiten') {
     var diseaseFilter = document.getElementById('admin-pig-filter-disease').value;
@@ -1987,12 +1990,14 @@ function renderAdminPigStats() {
     if (diseaseFilter) html += '<div class="ctit" style="margin:12px 0 8px">Tauben mit „'+diseaseFilter+'" ('+matching.length+')</div>' + pigListHtml(matching);
     content.innerHTML = html;
     ADMIN_PIG_EXPORT = diseaseFilter
-      ? { title: 'Krankheiten — ' + diseaseFilter, rows: pigeonRowsForExport(matching) }
-      : { title: 'Krankheiten — Häufigkeit', rows: Object.keys(diseaseMap).map(function(k){ return {Krankheit:k, Anzahl:diseaseMap[k]}; }) };
+      ? { title: 'Krankheiten — ' + diseaseFilter + filterLabel, rows: pigeonRowsForExport(matching) }
+      : { title: 'Krankheiten — Häufigkeit' + filterLabel, rows: Object.keys(diseaseMap).map(function(k){ return {Krankheit:k, Anzahl:diseaseMap[k]}; }) };
 
   } else if (sv === 'medikamente') {
     var medFilter = document.getElementById('admin-pig-filter-med').value;
-    var medLogs = DB.logs.filter(function(l){ return l.type==='medikation'; });
+    var allowedIds = {};
+    all.forEach(function(p){ allowedIds[p.id] = true; });
+    var medLogs = DB.logs.filter(function(l){ return l.type==='medikation' && allowedIds[l.pigeonId]; });
     var medPigeonSets = {};
     medLogs.forEach(function(l){
       [].concat(l.mname||[], l.mname2?[l.mname2]:[]).forEach(function(m){ if(!m) return; (medPigeonSets[m]=medPigeonSets[m]||{})[l.pigeonId]=true; });
@@ -2008,16 +2013,15 @@ function renderAdminPigStats() {
     }
     content.innerHTML = html;
     ADMIN_PIG_EXPORT = medFilter
-      ? { title: 'Medikamente — ' + medFilter, rows: pigeonRowsForExport(matchingPigeons) }
-      : { title: 'Medikamente — Anzahl behandelter Tauben', rows: Object.keys(medCounts).map(function(k){ return {Medikament:k, 'Anzahl Tauben':medCounts[k]}; }) };
+      ? { title: 'Medikamente — ' + medFilter + filterLabel, rows: pigeonRowsForExport(matchingPigeons) }
+      : { title: 'Medikamente — Anzahl behandelter Tauben' + filterLabel, rows: Object.keys(medCounts).map(function(k){ return {Medikament:k, 'Anzahl Tauben':medCounts[k]}; }) };
 
   } else if (sv === 'taubenschlaege') {
-    var list2 = statusFilter ? all.filter(function(p){ return (p.health||'Gesund')===statusFilter; }) : all;
     var byLoft = {};
-    list2.forEach(function(p){ var l = p.foundLoft || 'Unbekannt'; byLoft[l]=(byLoft[l]||0)+1; });
-    html = '<div class="ctit" style="margin-bottom:8px">Gesamt: '+list2.length+' Tauben in '+Object.keys(byLoft).length+' Taubenschlägen</div>' + adminBarList(byLoft);
+    all.forEach(function(p){ var l = p.foundLoft || 'Unbekannt'; byLoft[l]=(byLoft[l]||0)+1; });
+    html = '<div class="ctit" style="margin-bottom:8px">Gesamt: '+all.length+' Tauben in '+Object.keys(byLoft).length+' Taubenschlägen</div>' + adminBarList(byLoft);
     content.innerHTML = html;
-    ADMIN_PIG_EXPORT = { title: 'Taubenschläge' + (statusFilter?' — '+statusFilter:''), rows: Object.keys(byLoft).map(function(k){ return {Taubenschlag:k, Anzahl:byLoft[k]}; }) };
+    ADMIN_PIG_EXPORT = { title: 'Taubenschläge' + filterLabel, rows: Object.keys(byLoft).map(function(k){ return {Taubenschlag:k, Anzahl:byLoft[k]}; }) };
   }
 }
 
