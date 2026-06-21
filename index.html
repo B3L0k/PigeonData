@@ -349,6 +349,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="stit" id="ti-title">💊 Behandlungsempfehlung</div>
   <input type="hidden" id="ti-current-name">
   <div id="ti-body" style="margin-bottom:14px"></div>
+  <button class="btn2" style="margin-top:0;margin-bottom:14px" onclick="openProposalEdit()">✏️ Änderung vorschlagen</button>
   <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin-bottom:16px;cursor:pointer">
     <input type="checkbox" id="ti-hide-checkbox" style="width:auto">
     Diesen Hinweis für mich nicht mehr anzeigen
@@ -378,6 +379,55 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <button class="btn1" onclick="saveTreatmentInfo()">Speichern</button>
   <button class="btn2" onclick="cs('sh-treatment-edit')">Abbrechen</button>
   <div id="te-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
+ </div>
+</div>
+
+<!-- FORWARD PROPOSAL SHEET (Admin: Antrag zur Prüfung weiterleiten) -->
+<div class="overlay" id="sh-forward-proposal" onclick="oc(event,'sh-forward-proposal')">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit">↗️ Zur Prüfung weiterleiten</div>
+  <input type="hidden" id="fwd-proposal-id">
+  <div class="fg"><label class="fl">Prüfer/in</label>
+    <select class="fi" id="fwd-reviewer"><option value="">— wählen —</option></select>
+  </div>
+  <button class="btn1" onclick="confirmForwardProposal()">Weiterleiten</button>
+  <button class="btn2" onclick="cs('sh-forward-proposal')">Abbrechen</button>
+ </div>
+</div>
+
+<!-- PROPOSAL FORM SHEET (Änderung vorschlagen / Neuer Eintrag beantragen / Prüfung) -->
+<div class="overlay" id="sh-proposal-form" onclick="oc(event,'sh-proposal-form')" style="z-index:1450">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit" id="pr-sheet-title">✏️ Änderung vorschlagen</div>
+  <input type="hidden" id="pr-mode">
+  <input type="hidden" id="pr-id">
+  <input type="hidden" id="pr-target-name">
+
+  <div id="pr-original-block" style="display:none;margin-bottom:18px">
+    <div class="ctit">📄 Aktuelle Daten</div>
+    <div id="pr-original-body" style="background:var(--bg);border:1px solid var(--bdr);border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.6;color:var(--mu)"></div>
+  </div>
+
+  <div class="ctit" id="pr-form-label" style="margin-bottom:10px">✏️ Vorschlag</div>
+  <div class="fg" id="pr-name-wrap"><label class="fl">Bezeichnung (Symptom / Krankheit / Parasit) *</label><input class="fi" id="pr-name" type="text" placeholder="z.B. Kokzidien"></div>
+  <div class="fg" id="pr-category-wrap"><label class="fl">Kategorie *</label>
+    <select class="fi" id="pr-category">
+      <option value="symptom">Symptom</option>
+      <option value="krankheit">Krankheit / Parasit</option>
+    </select>
+  </div>
+  <div class="fg"><label class="fl" id="pr-lbl-medikament">Medikament *</label><input class="fi" id="pr-medikament" type="text" placeholder="z.B. Appercox Tabletten"></div>
+  <div class="fg"><label class="fl" id="pr-lbl-dosis">Dosis *</label><input class="fi" id="pr-dosis" type="text" placeholder="z.B. 0,1 ml pro 100g Taube"></div>
+  <div class="fg"><label class="fl" id="pr-lbl-verabreichung">Verabreichung *</label><input class="fi" id="pr-verabreichung" type="text" placeholder="z.B. ins Trinkwasser"></div>
+  <div class="fg"><label class="fl" id="pr-lbl-dauer">Medikationsdauer *</label><input class="fi" id="pr-dauer" type="text" placeholder="z.B. 5 Tage, danach wiederholen"></div>
+  <div class="fg"><label class="fl">Nachbehandlung (z.B. Supplement)</label><input class="fi" id="pr-nachbehandlung" type="text" placeholder="z.B. Nekton B nach Abklingen"></div>
+
+  <button class="btn1" id="pr-submit-btn" onclick="submitProposalForm()">📨 Änderung vorschlagen senden</button>
+  <button class="btn2" id="pr-approve-btn" style="display:none" onclick="reviewerApproveProposal()">✅ OK, zustimmen</button>
+  <button class="btn2" onclick="cs('sh-proposal-form')">Abbrechen</button>
+  <div id="pr-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
  </div>
 </div>
 
@@ -452,7 +502,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <span id="acc-name">—</span>
   </div>
   <div class="ibtn" onclick="openSheet('sh-search')">🔍</div>
-  <div class="ibtn" onclick="openSheet('sh-settings')">⚙️</div>
+  <div class="ibtn" onclick="openSettingsSheet()">⚙️</div>
 </div>
 
 <!-- PAGES -->
@@ -485,6 +535,10 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <div class="inbox-body" id="inbox-body" style="display:none">
       <div id="inbox-msgs"></div>
       <div class="compose-btn" onclick="openCompose()">✏️ Neue Nachricht schreiben</div>
+      <div class="dvd"></div>
+      <div class="stit2" style="margin-bottom:8px">📋 Meine Anträge</div>
+      <div id="my-proposals-list"></div>
+      <div class="compose-btn" onclick="openNewEntryRequest()">➕ Neue Krankheit/Symptom vorschlagen</div>
     </div>
   </div>
 
@@ -740,6 +794,9 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <div class="dvd"></div>
     <div class="stit2" style="margin-top:4px">📬 Gesendete Nachrichten</div>
     <div id="admin-msg-list"></div>
+    <div class="dvd"></div>
+    <div class="stit2" style="margin-top:4px">📋 Anträge (Änderungen &amp; neue Einträge)</div>
+    <div id="admin-proposals-list"></div>
   </div>
 
   <!-- TASKS TAB -->
@@ -1117,6 +1174,12 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="hrow" onclick="openHandbook()"><div class="hi">📖</div><div class="hinfo"><div class="ht">Benutzerhandbuch</div><div class="hs2">Anleitung und Funktionsübersicht</div></div><div class="ibtn">→</div></div>
   <div class="hrow" onclick="openHandbuch()"><div class="hi">📘</div><div class="hinfo"><div class="ht">Päppel Handout</div><div class="hs2">PDF öffnen</div></div><div class="ibtn">→</div></div>
   <div class="hrow" onclick="resetTreatmentInfoHints()"><div class="hi">🔄</div><div class="hinfo"><div class="ht">Behandlungs-Hinweise zurücksetzen</div><div class="hs2">Ausgeblendete Infofenster wieder einblenden</div></div></div>
+  <div class="dvd"></div>
+  <div class="hrow" style="cursor:default">
+    <div class="hi">📧</div>
+    <div class="hinfo"><div class="ht">E-Mail-Benachrichtigungen</div><div class="hs2">Bei neuen Nachrichten &amp; Anträgen per E-Mail informieren</div></div>
+    <input type="checkbox" id="email-notif-toggle" style="width:auto" onchange="toggleEmailNotifications(this.checked)">
+  </div>
   <div class="dvd"></div>
   <p style="color:var(--mu);font-size:13px;text-align:center">PigeonData v2.0<br>Alle Daten lokal gespeichert</p>
  </div>
@@ -1992,6 +2055,401 @@ async function resetTreatmentInfoHints() {
   } catch (e) {
     toast('❌ ' + e.message);
   }
+}
+
+// ============================================================
+// ANTRÄGE / FREIGABE-WORKFLOW (Änderungsvorschläge & neue Einträge
+// für Krankheiten/Symptome aus dem Behandlungsinfo-System)
+// ============================================================
+var PROPOSALS_CACHE = [];
+var PROPOSAL_STATUS_LABEL = {
+  in_bearbeitung: 'In Bearbeitung',
+  weitergeleitet: 'Weitergeleitet zur Prüfung',
+  geprueft:       'Geprüft – wartet auf Freigabe',
+  freigegeben:    'Freigegeben',
+  abgelehnt:      'Abgelehnt'
+};
+var PROPOSAL_STATUS_COLOR = {
+  in_bearbeitung: 'var(--acc)',
+  weitergeleitet: 'var(--orn)',
+  geprueft:       'var(--orn)',
+  freigegeben:    'var(--grn)',
+  abgelehnt:      'var(--red)'
+};
+
+async function loadProposals() {
+  PROPOSALS_CACHE = [];
+  if (!sb || !SB_USER) return;
+  try {
+    var res;
+    if (CUR_USER && isAdmin(CUR_USER)) {
+      res = await sb.from('proposals').select('*').order('created_at', {ascending:false});
+    } else {
+      res = await sb.from('proposals').select('*')
+        .or('created_by.eq.'+SB_USER.id+',reviewer_id.eq.'+SB_USER.id)
+        .order('created_at', {ascending:false});
+    }
+    if (res.error) throw res.error;
+    PROPOSALS_CACHE = res.data || [];
+  } catch (e) {
+    console.warn('Anträge laden fehlgeschlagen:', e.message);
+  }
+}
+
+function proposalSummaryHtml(p) {
+  function row(label, val) { return val ? '<div><b>'+label+':</b> '+val+'</div>' : ''; }
+  var d = p.proposed_data || {};
+  return row('Medikament', d.medikament) + row('Dosis', d.dosis) + row('Verabreichung', d.verabreichung) + row('Medikationsdauer', d.dauer) + row('Nachbehandlung', d.nachbehandlung);
+}
+
+// --- Anzeige für normale User: eigene Anträge + ggf. als Prüfer zugewiesene ---
+function renderMyProposals() {
+  var el = document.getElementById('my-proposals-list'); if (!el || !CUR_USER) return;
+  var mine = PROPOSALS_CACHE.filter(function(p){ return p.created_by === CUR_USER.id; });
+  var toReview = PROPOSALS_CACHE.filter(function(p){ return p.reviewer_id === CUR_USER.id && p.status === 'weitergeleitet'; });
+  var html = '';
+  if (toReview.length) {
+    html += '<div style="font-size:12px;font-weight:600;color:var(--orn);margin-bottom:6px">↗️ Dir zur Prüfung zugewiesen</div>';
+    html += toReview.map(function(p) {
+      return '<div class="lentry">'+
+        '<div style="font-weight:600;font-size:14px">'+(p.kind==='new'?'➕ Neu: ':'✏️ Änderung: ')+p.target_name+'</div>'+
+        '<div style="font-size:12px;color:var(--mu);margin:4px 0">'+proposalSummaryHtml(p)+'</div>'+
+        '<div style="display:flex;gap:8px;margin-top:6px">'+
+          '<button class="btn2" style="margin:0;width:auto;padding:8px 14px;font-size:13px" onclick="openReviewerEdit(&quot;'+p.id+'&quot;)">✏️ Ändern</button>'+
+          '<button class="btn1" style="margin:0;width:auto;padding:8px 14px;font-size:13px" onclick="reviewerApproveDirect(&quot;'+p.id+'&quot;)">✅ OK, zustimmen</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+  if (mine.length) {
+    html += '<div style="font-size:12px;font-weight:600;color:var(--mu);margin:10px 0 6px">📨 Von mir eingereicht</div>';
+    html += mine.map(function(p) {
+      var col = PROPOSAL_STATUS_COLOR[p.status] || 'var(--mu)';
+      return '<div class="lentry">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+          '<div style="font-weight:600;font-size:14px">'+(p.kind==='new'?'➕ Neu: ':'✏️ Änderung: ')+p.target_name+'</div>'+
+          '<span class="badge" style="background:'+col+'22;color:'+col+';flex-shrink:0">'+(PROPOSAL_STATUS_LABEL[p.status]||p.status)+'</span>'+
+        '</div>'+
+        '<div style="font-size:12px;color:var(--mu);margin-top:4px">'+proposalSummaryHtml(p)+'</div>'+
+      '</div>';
+    }).join('');
+  }
+  el.innerHTML = html || '<p style="color:var(--mu);font-size:13px;padding:6px 0">Noch keine Anträge</p>';
+}
+
+// --- Anzeige für Admin: alle Anträge mit den 3 Optionen ---
+function renderAdminProposals() {
+  var el = document.getElementById('admin-proposals-list'); if (!el) return;
+  if (!PROPOSALS_CACHE.length) { el.innerHTML = '<p style="color:var(--mu);font-size:13px;padding:6px 0">Keine Anträge vorhanden</p>'; return; }
+  el.innerHTML = PROPOSALS_CACHE.map(function(p) {
+    var col = PROPOSAL_STATUS_COLOR[p.status] || 'var(--mu)';
+    var submitter = (USERS.find(function(u){return u.id===p.created_by;})||{}).name || '—';
+    var reviewer = p.reviewer_id ? ((USERS.find(function(u){return u.id===p.reviewer_id;})||{}).name || '—') : '';
+    var dataForDisplay = p.reviewer_data || p.proposed_data;
+    var actionable = (p.status === 'in_bearbeitung' || p.status === 'geprueft');
+    var actions = actionable ? (
+      '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
+        '<button class="btnX" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="rejectProposal(&quot;'+p.id+'&quot;)">❌ Ablehnen</button>'+
+        (p.status === 'in_bearbeitung' ? '<button class="btn2" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="openForwardProposal(&quot;'+p.id+'&quot;)">↗️ Zur Prüfung weiterleiten</button>' : '')+
+        '<button class="btn1" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="approveProposal(&quot;'+p.id+'&quot;)">✅ Freigeben</button>'+
+      '</div>'
+    ) : '';
+    return '<div class="lentry">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+        '<div style="font-weight:600;font-size:14px">'+(p.kind==='new'?'➕ Neu: ':'✏️ Änderung: ')+p.target_name+'</div>'+
+        '<span class="badge" style="background:'+col+'22;color:'+col+';flex-shrink:0">'+(PROPOSAL_STATUS_LABEL[p.status]||p.status)+'</span>'+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--mu);margin-top:2px">Von: '+submitter+(reviewer?' · Prüfer/in: '+reviewer:'')+'</div>'+
+      (p.original_data ? '<div style="font-size:12px;color:var(--mu);margin-top:6px"><b>Bisher:</b><br>'+(proposalSummaryHtml({proposed_data:p.original_data})||'—')+'</div>' : '')+
+      '<div style="font-size:12px;margin-top:6px"><b>'+(p.reviewer_data?'Vorschlag (vom Prüfer geändert):':'Vorschlag:')+'</b><br>'+(proposalSummaryHtml({proposed_data:dataForDisplay})||'—')+'</div>'+
+      actions+
+    '</div>';
+  }).join('');
+}
+
+function setProposalFieldsRequired(required) {
+  ['medikament','dosis','verabreichung','dauer'].forEach(function(f) {
+    var lbl = document.getElementById('pr-lbl-'+f);
+    if (!lbl) return;
+    var base = lbl.textContent.replace(/\s*\*$/, '');
+    lbl.textContent = required ? (base + ' *') : base;
+  });
+}
+
+function renderProposalDataHtml(data) {
+  if (!data) return '';
+  function row(label, val) { return val ? '<div><b>'+label+':</b> '+val+'</div>' : ''; }
+  var out = row('Medikament', data.medikament) + row('Dosis', data.dosis) + row('Verabreichung', data.verabreichung) + row('Medikationsdauer', data.dauer) + row('Nachbehandlung', data.nachbehandlung);
+  return out;
+}
+
+function fillProposalFormFields(data) {
+  document.getElementById('pr-medikament').value = data ? (data.medikament||'') : '';
+  document.getElementById('pr-dosis').value = data ? (data.dosis||'') : '';
+  document.getElementById('pr-verabreichung').value = data ? (data.verabreichung||'') : '';
+  document.getElementById('pr-dauer').value = data ? (data.dauer||'') : '';
+  document.getElementById('pr-nachbehandlung').value = data ? (data.nachbehandlung||'') : '';
+}
+
+function collectProposalFormFields() {
+  return {
+    medikament: document.getElementById('pr-medikament').value.trim(),
+    dosis: document.getElementById('pr-dosis').value.trim(),
+    verabreichung: document.getElementById('pr-verabreichung').value.trim(),
+    dauer: document.getElementById('pr-dauer').value.trim(),
+    nachbehandlung: document.getElementById('pr-nachbehandlung').value.trim()
+  };
+}
+
+// 1) Änderung an bestehendem Eintrag vorschlagen (aus dem Behandlungsinfo-Popup)
+function openProposalEdit() {
+  var name = document.getElementById('ti-current-name').value;
+  var info = TREATMENT_INFO[name] || null;
+  document.getElementById('pr-mode').value = 'edit';
+  document.getElementById('pr-id').value = '';
+  document.getElementById('pr-target-name').value = name;
+  document.getElementById('pr-sheet-title').textContent = '✏️ Änderung vorschlagen: ' + name;
+  document.getElementById('pr-original-block').style.display = 'block';
+  document.getElementById('pr-original-body').innerHTML = renderProposalDataHtml(info) || '<p style="margin:0">In Arbeit – noch keine Daten hinterlegt</p>';
+  document.getElementById('pr-name-wrap').style.display = 'none';
+  document.getElementById('pr-category-wrap').style.display = 'none';
+  fillProposalFormFields(info);
+  setProposalFieldsRequired(false);
+  document.getElementById('pr-submit-btn').textContent = '📨 Änderung vorschlagen senden';
+  document.getElementById('pr-submit-btn').style.display = 'block';
+  document.getElementById('pr-approve-btn').style.display = 'none';
+  document.getElementById('pr-error').textContent = '';
+  openSheet('sh-proposal-form');
+}
+
+// 2) Neue Krankheit/Symptom vorschlagen (aus der Postbox)
+function openNewEntryRequest() {
+  document.getElementById('pr-mode').value = 'new';
+  document.getElementById('pr-id').value = '';
+  document.getElementById('pr-target-name').value = '';
+  document.getElementById('pr-sheet-title').textContent = '➕ Neue Krankheit/Symptom vorschlagen';
+  document.getElementById('pr-original-block').style.display = 'none';
+  document.getElementById('pr-name-wrap').style.display = 'block';
+  document.getElementById('pr-category-wrap').style.display = 'block';
+  document.getElementById('pr-name').value = '';
+  document.getElementById('pr-category').value = 'symptom';
+  fillProposalFormFields(null);
+  setProposalFieldsRequired(true);
+  document.getElementById('pr-submit-btn').textContent = '📨 Beantragen';
+  document.getElementById('pr-submit-btn').style.display = 'block';
+  document.getElementById('pr-approve-btn').style.display = 'none';
+  document.getElementById('pr-error').textContent = '';
+  openSheet('sh-proposal-form');
+}
+
+// 3) Prüfer möchte den Vorschlag vor der Zustimmung noch ändern
+function openReviewerEdit(id) {
+  var p = PROPOSALS_CACHE.find(function(x){return x.id===id;}); if (!p) return;
+  document.getElementById('pr-mode').value = 'reviewer_edit';
+  document.getElementById('pr-id').value = p.id;
+  document.getElementById('pr-target-name').value = p.target_name;
+  document.getElementById('pr-sheet-title').textContent = '✏️ Vorschlag prüfen: ' + p.target_name;
+  document.getElementById('pr-original-block').style.display = p.original_data ? 'block' : 'none';
+  if (p.original_data) document.getElementById('pr-original-body').innerHTML = renderProposalDataHtml(p.original_data) || '—';
+  document.getElementById('pr-name-wrap').style.display = 'none';
+  document.getElementById('pr-category-wrap').style.display = 'none';
+  fillProposalFormFields(p.reviewer_data || p.proposed_data);
+  setProposalFieldsRequired(false);
+  document.getElementById('pr-submit-btn').textContent = '📨 Geänderten Vorschlag senden';
+  document.getElementById('pr-submit-btn').style.display = 'block';
+  document.getElementById('pr-approve-btn').style.display = 'none';
+  document.getElementById('pr-error').textContent = '';
+  openSheet('sh-proposal-form');
+}
+
+async function submitProposalForm() {
+  var mode = document.getElementById('pr-mode').value;
+  var errEl = document.getElementById('pr-error');
+  errEl.textContent = '';
+  var fields = collectProposalFormFields();
+
+  if (mode === 'new') {
+    var name = document.getElementById('pr-name').value.trim();
+    if (!name) { errEl.textContent = 'Bitte Bezeichnung eingeben'; return; }
+    if (!fields.medikament || !fields.dosis || !fields.verabreichung || !fields.dauer) {
+      errEl.textContent = 'Bitte alle Felder außer „Nachbehandlung" ausfüllen'; return;
+    }
+    fields.category = document.getElementById('pr-category').value;
+    showLoading('Sende Antrag…');
+    try {
+      var r = await sb.from('proposals').insert({
+        kind: 'new', target_name: name, original_data: null, proposed_data: fields,
+        status: 'in_bearbeitung', created_by: CUR_USER.id
+      });
+      if (r.error) throw r.error;
+      await loadProposals();
+      renderMyProposals();
+      hideLoading();
+      cs('sh-proposal-form');
+      toast('📨 Antrag eingereicht — Status: In Bearbeitung');
+      USERS.filter(isAdmin).forEach(function(a){ notifyByEmail(a.id, '📋 Neuer Antrag in PigeonData', 'Neue Krankheit/Symptom vorgeschlagen: ' + name); });
+    } catch (e) { hideLoading(); errEl.textContent = '❌ ' + e.message; }
+    return;
+  }
+
+  if (mode === 'edit') {
+    var targetName = document.getElementById('pr-target-name').value;
+    var original = TREATMENT_INFO[targetName] ? {
+      medikament: TREATMENT_INFO[targetName].medikament, dosis: TREATMENT_INFO[targetName].dosis,
+      verabreichung: TREATMENT_INFO[targetName].verabreichung, dauer: TREATMENT_INFO[targetName].dauer,
+      nachbehandlung: TREATMENT_INFO[targetName].nachbehandlung
+    } : null;
+    showLoading('Sende Änderungsvorschlag…');
+    try {
+      var r2 = await sb.from('proposals').insert({
+        kind: 'edit', target_name: targetName, original_data: original, proposed_data: fields,
+        status: 'in_bearbeitung', created_by: CUR_USER.id
+      });
+      if (r2.error) throw r2.error;
+      await loadProposals();
+      renderMyProposals();
+      hideLoading();
+      cs('sh-proposal-form');
+      toast('📨 Änderungsvorschlag eingereicht — Status: In Bearbeitung');
+      USERS.filter(isAdmin).forEach(function(a){ notifyByEmail(a.id, '📋 Neuer Änderungsvorschlag in PigeonData', 'Änderungsvorschlag für: ' + targetName); });
+      // Bewusst: Behandlungsinfo-Popup und Taubenformular bleiben geöffnet, der User kann weiterarbeiten.
+    } catch (e) { hideLoading(); errEl.textContent = '❌ ' + e.message; }
+    return;
+  }
+
+  if (mode === 'reviewer_edit') {
+    var id = document.getElementById('pr-id').value;
+    showLoading('Sende geprüften Vorschlag…');
+    try {
+      var r3 = await sb.from('proposals').update({ reviewer_data: fields, status: 'geprueft' }).eq('id', id);
+      if (r3.error) throw r3.error;
+      await loadProposals();
+      renderMyProposals();
+      hideLoading();
+      cs('sh-proposal-form');
+      toast('✅ Geprüfter Vorschlag an Admin gesendet');
+      USERS.filter(isAdmin).forEach(function(a){ notifyByEmail(a.id, '✅ Antrag geprüft in PigeonData', 'Der Vorschlag für „' + document.getElementById('pr-target-name').value + '" wurde von einem/einer Prüfer/in bearbeitet und ist nun freigabebereit.'); });
+    } catch (e) { hideLoading(); errEl.textContent = '❌ ' + e.message; }
+    return;
+  }
+}
+
+// Prüfer stimmt ohne Änderungen direkt zu
+async function reviewerApproveDirect(id) {
+  showLoading('Speichern…');
+  try {
+    var { error } = await sb.from('proposals').update({ status: 'geprueft' }).eq('id', id);
+    if (error) throw error;
+    await loadProposals();
+    renderMyProposals();
+    hideLoading();
+    toast('✅ Zustimmung gesendet — Admin kann nun freigeben');
+    var pApproved = PROPOSALS_CACHE.find(function(x){return x.id===id;});
+    USERS.filter(isAdmin).forEach(function(a){ notifyByEmail(a.id, '✅ Antrag geprüft in PigeonData', 'Der Vorschlag für „' + (pApproved?pApproved.target_name:'') + '" wurde geprüft und zugestimmt.'); });
+  } catch (e) { hideLoading(); toast('❌ ' + e.message); }
+}
+
+// --- Admin-Aktionen ---
+function openForwardProposal(id) {
+  document.getElementById('fwd-proposal-id').value = id;
+  var p = PROPOSALS_CACHE.find(function(x){return x.id===id;});
+  var sel = document.getElementById('fwd-reviewer');
+  sel.innerHTML = '<option value="">— wählen —</option>' + USERS
+    .filter(function(u){ return !p || u.id !== p.created_by; })
+    .map(function(u){ return '<option value="'+u.id+'">'+u.name+'</option>'; }).join('');
+  openSheet('sh-forward-proposal');
+}
+
+async function confirmForwardProposal() {
+  var id = document.getElementById('fwd-proposal-id').value;
+  var reviewerId = document.getElementById('fwd-reviewer').value;
+  if (!reviewerId) { toast('Bitte Prüfer/in auswählen'); return; }
+  var pFwd = PROPOSALS_CACHE.find(function(x){return x.id===id;});
+  showLoading('Weiterleiten…');
+  try {
+    var { error } = await sb.from('proposals').update({ reviewer_id: reviewerId, status: 'weitergeleitet' }).eq('id', id);
+    if (error) throw error;
+    await loadProposals();
+    renderAdminProposals();
+    hideLoading();
+    cs('sh-forward-proposal');
+    toast('↗️ Zur Prüfung weitergeleitet');
+    notifyByEmail(reviewerId, '↗️ Antrag zur Prüfung in PigeonData', 'Dir wurde ein Antrag zur Prüfung zugewiesen: ' + (pFwd?pFwd.target_name:''));
+  } catch (e) { hideLoading(); toast('❌ ' + e.message); }
+}
+
+async function rejectProposal(id) {
+  if (!confirm('Antrag wirklich ablehnen?')) return;
+  var pRej = PROPOSALS_CACHE.find(function(x){return x.id===id;});
+  try {
+    var { error } = await sb.from('proposals').update({ status: 'abgelehnt' }).eq('id', id);
+    if (error) throw error;
+    await loadProposals();
+    renderAdminProposals();
+    toast('❌ Antrag abgelehnt');
+    if (pRej) notifyByEmail(pRej.created_by, '❌ Antrag abgelehnt in PigeonData', 'Dein Antrag für „' + pRej.target_name + '" wurde abgelehnt.');
+  } catch (e) { toast('❌ ' + e.message); }
+}
+
+async function approveProposal(id) {
+  var p = PROPOSALS_CACHE.find(function(x){return x.id===id;}); if (!p) return;
+  if (!confirm('Antrag freigeben und Behandlungsinfo aktualisieren?')) return;
+  var data = p.reviewer_data || p.proposed_data || {};
+  showLoading('Freigeben…');
+  try {
+    if (p.kind === 'new') {
+      var rIns = await sb.from('treatment_info').insert({
+        name: p.target_name, category: data.category || 'krankheit',
+        medikament: data.medikament||'', dosis: data.dosis||'', verabreichung: data.verabreichung||'',
+        dauer: data.dauer||'', nachbehandlung: data.nachbehandlung||''
+      });
+      if (rIns.error) throw rIns.error;
+    } else {
+      var rUpd = await sb.from('treatment_info').update({
+        medikament: data.medikament||'', dosis: data.dosis||'', verabreichung: data.verabreichung||'',
+        dauer: data.dauer||'', nachbehandlung: data.nachbehandlung||''
+      }).eq('name', p.target_name);
+      if (rUpd.error) throw rUpd.error;
+    }
+    var rStat = await sb.from('proposals').update({ status: 'freigegeben' }).eq('id', id);
+    if (rStat.error) throw rStat.error;
+    await loadTreatmentInfo();
+    await loadProposals();
+    renderAdminProposals();
+    if (document.getElementById('admin-tab-info') && document.getElementById('admin-tab-info').style.display !== 'none') renderAdminTreatmentInfo();
+    hideLoading();
+    toast('✅ Freigegeben und übernommen');
+    notifyByEmail(p.created_by, '✅ Antrag freigegeben in PigeonData', 'Dein Antrag für „' + p.target_name + '" wurde freigegeben und übernommen.');
+  } catch (e) { hideLoading(); toast('❌ ' + e.message); }
+}
+
+// --- E-Mail-Benachrichtigungen (Ein/Aus) ---
+function openSettingsSheet() {
+  var cb = document.getElementById('email-notif-toggle');
+  if (cb) cb.checked = !!(CUR_USER && CUR_USER.emailNotifications !== false);
+  openSheet('sh-settings');
+}
+
+async function toggleEmailNotifications(checked) {
+  if (!CUR_USER) return;
+  CUR_USER.emailNotifications = checked;
+  try {
+    if (sb && SB_USER) await sb.from('profiles').update({ email_notifications: checked }).eq('id', CUR_USER.id);
+    toast(checked ? '📧 E-Mail-Benachrichtigungen aktiviert' : '🔕 E-Mail-Benachrichtigungen deaktiviert');
+  } catch (e) { toast('❌ ' + e.message); }
+}
+
+// --- Best-Effort-Versand einer Benachrichtigungs-E-Mail über eine Supabase Edge Function.
+// Schlägt die Funktion fehl (z.B. noch nicht eingerichtet), bricht das NICHT die App ab.
+async function notifyByEmail(toUserId, subject, bodyText) {
+  try {
+    var u = USERS.find(function(x){ return x.id === toUserId; });
+    if (!u || u.emailNotifications === false || !u.email) return;
+    if (!sb) return;
+    await sb.functions.invoke('send-notification-email', {
+      body: { to: u.email, subject: subject, text: bodyText }
+    });
+  } catch (e) { console.warn('E-Mail-Benachrichtigung fehlgeschlagen (ignoriert):', e.message); }
 }
 
 // --- Admin: Verwaltung der Behandlungsinfos ---
@@ -3463,7 +3921,7 @@ function renderInbox() {
     badge.textContent = cnt;
     badge.style.display = cnt > 0 ? 'inline-block' : 'none';
   }
-  if (INBOX_OPEN) renderInboxMsgs();
+  if (INBOX_OPEN) { renderInboxMsgs(); renderMyProposals(); }
 }
 
 function renderInboxMsgs() {
@@ -3624,7 +4082,7 @@ function setAdminTab(tab, el) {
     if (el2) el2.style.display = (t===tab)?'block':'none';
   });
   if (tab==='users') renderAdminUsers();
-  if (tab==='messages') renderAdminMessages();
+  if (tab==='messages') { renderAdminMessages(); renderAdminProposals(); }
   if (tab==='tasks') renderAdminTasks();
   if (tab==='info') renderAdminTreatmentInfo();
 }
@@ -3726,6 +4184,11 @@ function sendAdminMessage() {
   if (!text) { alert('Bitte Nachricht eingeben'); return; }
   var to = document.getElementById('msg-recipient').value;
   saveMessage(CUR_USER.id, to, text);
+  if (to === 'all') {
+    USERS.forEach(function(u){ if (u.id !== CUR_USER.id) notifyByEmail(u.id, '📬 Neue Nachricht in PigeonData', text); });
+  } else {
+    notifyByEmail(to, '📬 Neue Nachricht in PigeonData', text);
+  }
   document.getElementById('msg-text').value = '';
   toast('✉️ Nachricht gesendet!');
   renderAdminMessages();
@@ -4040,6 +4503,7 @@ async function finishLogin(u) {
   // weil DB zu diesem Zeitpunkt noch leer ist.
   await loadDB();
   await loadTreatmentInfo();
+  await loadProposals();
   goPage('home', document.querySelector('.ni'));
   renderHome();
 }
@@ -4474,6 +4938,7 @@ async function loadUsers() {
       email: row.email || '',
       project: row.project || '', // Projektzugehörigkeit
       hiddenInfo: row.hidden_info || [], // ausgeblendete Behandlungs-Hinweise
+      emailNotifications: row.email_notifications !== false, // Standard: aktiviert
       must_change_pw: !!row.must_change_pw
     }));
   } catch (e) {
