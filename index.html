@@ -549,7 +549,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <div class="acc-av" id="acc-av"><span id="acc-av-emoji">👤</span><img id="acc-av-img" style="display:none"></div>
     <span id="acc-name">—</span>
   </div>
-  <div class="ibtn" onclick="openSheet('sh-documents')">📁</div>
+  <div class="ibtn" onclick="openSheet('sh-documents')" style="color:var(--acc2)"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5a1.5 1.5 0 0 1 1.5-1.5h4.379a1.5 1.5 0 0 1 1.06.44l1.122 1.12a1.5 1.5 0 0 0 1.06.44H19.5A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/></svg></div>
   <div class="ibtn" onclick="openSettingsSheet()">⚙️</div>
 </div>
 
@@ -4264,11 +4264,18 @@ async function doDeleteMsg(id, forAll, fromView) {
   cs('sh-delete-msg');
   if (forAll) {
     // Nachricht für alle entgültig entfernen — muss in Supabase gelöscht werden,
-    // sonst taucht sie nach einem Reload wieder auf (war vorher der Bug).
+    // sonst taucht sie nach einem Reload wieder auf.
     try {
       if (sb && SB_USER) {
-        var { error } = await sb.from('messages').delete().eq('id', id);
+        var { error, count } = await sb.from('messages').delete({ count: 'exact' }).eq('id', id);
         if (error) throw error;
+        if (!count) {
+          // 0 betroffene Zeilen -> die Datenbank-Berechtigung (RLS) hat den
+          // Löschvorgang im Hintergrund verweigert, ohne einen Fehler zu werfen.
+          toast('❌ Keine Berechtigung zum Löschen für alle (RLS)');
+          renderInbox();
+          return;
+        }
       }
       _msgsCache = (_msgsCache||[]).filter(function(m){ return m.id !== id; });
       toast('Nachricht für alle gelöscht');
