@@ -2230,11 +2230,12 @@ function adminProposalCardHtml(p) {
   var col = PROPOSAL_STATUS_COLOR[p.status] || 'var(--mu)';
   var submitter = (USERS.find(function(u){return u.id===p.created_by;})||{}).name || '—';
   var reviewer = p.reviewer_id ? ((USERS.find(function(u){return u.id===p.reviewer_id;})||{}).name || '—') : '';
-  var actionable = (p.status === 'in_bearbeitung' || p.status === 'geprueft');
+  var actionable = (p.status === 'in_bearbeitung' || p.status === 'weitergeleitet' || p.status === 'geprueft');
   var actions = actionable ? (
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap" onclick="event.stopPropagation()">'+
       '<button class="btnX" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="rejectProposal(&quot;'+p.id+'&quot;)">❌ Ablehnen</button>'+
-      (p.status === 'in_bearbeitung' ? '<button class="btn2" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="openForwardProposal(&quot;'+p.id+'&quot;)">↗️ Zur Prüfung weiterleiten</button>' : '')+
+      (p.kind !== 'general' ? '<button class="btn2" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="openReviewerEdit(&quot;'+p.id+'&quot;)">✏️ Selbst bearbeiten</button>' : '')+
+      '<button class="btn2" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="openForwardProposal(&quot;'+p.id+'&quot;)">↗️ '+(p.status==='in_bearbeitung'?'Zur Prüfung weiterleiten':'Erneut weiterleiten')+'</button>'+
       '<button class="btn1" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="approveProposal(&quot;'+p.id+'&quot;)">✅ Freigeben</button>'+
     '</div>'
   ) : '';
@@ -2321,9 +2322,18 @@ function openProposalView(id) {
   document.getElementById('pv-body').innerHTML = body;
 
   var actions = [];
-  if (p.reviewer_id === CUR_USER.id && p.status === 'weitergeleitet') {
+  var canReviewerApprove = p.reviewer_id === CUR_USER.id && p.status === 'weitergeleitet';
+  var canAdminAct = CUR_USER && isAdmin(CUR_USER) && (p.status === 'in_bearbeitung' || p.status === 'weitergeleitet' || p.status === 'geprueft');
+
+  if (canReviewerApprove && !canAdminAct) {
     actions.push('<button class="btn1" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');reviewerApproveDirect(\''+p.id+'\')">✅ Zustimmen</button>');
     if (p.kind !== 'general') actions.push('<button class="btn2" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');openReviewerEdit(\''+p.id+'\')">✏️ Bearbeiten</button>');
+  }
+  if (canAdminAct) {
+    actions.push('<button class="btn1" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');approveProposal(\''+p.id+'\')">✅ Freigeben</button>');
+    if (p.kind !== 'general') actions.push('<button class="btn2" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');openReviewerEdit(\''+p.id+'\')">✏️ Selbst bearbeiten</button>');
+    actions.push('<button class="btn2" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');openForwardProposal(\''+p.id+'\')">↗️ '+(p.status==='in_bearbeitung'?'Weiterleiten':'Erneut weiterleiten')+'</button>');
+    actions.push('<button class="btnX" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');rejectProposal(\''+p.id+'\')">❌ Ablehnen</button>');
   }
   if (p.created_by === CUR_USER.id || (CUR_USER && isAdmin(CUR_USER))) {
     actions.push('<button class="btnX" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="deleteProposal(\''+p.id+'\')">🗑️ Antrag löschen</button>');
@@ -5237,6 +5247,27 @@ async function loadUsers() {
       emailNotifications: row.email_notifications !== false, // Standard: aktiviert
       must_change_pw: !!row.must_change_pw
     }));
+
+    // Normale User dürfen laut RLS nur ihre eigene Profilzeile lesen — dadurch
+    // fehlten ihnen bisher alle anderen User (z.B. als Empfänger beim
+    // Nachrichtenschreiben). Wir ergänzen daher zusätzlich ein eingeschränktes
+    // "Verzeichnis" (nur Name/Rolle, kein PIN/E-Mail) für alle fehlenden User.
+    try {
+      const { data: dirData, error: dirError } = await sb.from('profiles_directory').select('*');
+      if (!dirError && dirData) {
+        dirData.forEach(function(row) {
+          if (!USERS.find(function(u){ return u.id === row.id; })) {
+            USERS.push({
+              id: row.id,
+              name: row.full_name || row.username || '?',
+              username: row.username || '',
+              pin: '', photo: '', role: row.role || 'user', email: '',
+              project: '', hiddenInfo: [], emailNotifications: true, must_change_pw: false
+            });
+          }
+        });
+      }
+    } catch (e2) { console.warn('profiles_directory laden fehlgeschlagen:', e2.message); }
   } catch (e) {
     console.warn('loadUsers Fehler:', e.message);
     // Fallback: localStorage
