@@ -478,7 +478,9 @@ select.fi option{background:var(--sur);color:var(--tx)}
 <div class="overlay" id="sh-general-proposal" onclick="oc(event,'sh-general-proposal')" style="z-index:1450">
  <div class="sheet">
   <div class="handle"></div>
-  <div class="stit">📝 Allgemeinen Antrag stellen</div>
+  <div class="stit" id="gp-sheet-title">📝 Allgemeinen Antrag stellen</div>
+  <input type="hidden" id="gp-mode" value="new">
+  <input type="hidden" id="gp-id">
   <div class="fg"><label class="fl">Rubrik / Funktion der App *</label>
     <select class="fi" id="gp-category">
       <option value="">— wählen —</option>
@@ -496,7 +498,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="fg"><label class="fl">Dein Anliegen *</label>
     <textarea class="fi" id="gp-description" rows="5" placeholder="z.B. Vorschlag für eine neue Futtersorte, Optimierungswunsch..."></textarea>
   </div>
-  <button class="btn1" onclick="submitGeneralProposal()">📨 Antrag senden</button>
+  <button class="btn1" id="gp-submit-btn" onclick="submitGeneralProposal()">📨 Antrag senden</button>
   <button class="btn2" onclick="cs('sh-general-proposal')">Abbrechen</button>
   <div id="gp-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
  </div>
@@ -2275,7 +2277,7 @@ function adminProposalCardHtml(p) {
   var actions = actionable ? (
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap" onclick="event.stopPropagation()">'+
       '<button class="btnX" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="rejectProposal(&quot;'+p.id+'&quot;)">❌ Ablehnen</button>'+
-      (p.kind !== 'general' ? '<button class="btn2" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="openReviewerEdit(&quot;'+p.id+'&quot;)">✏️ Selbst bearbeiten</button>' : '')+
+      '<button class="btn2" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="'+(p.kind==='general'?'openGeneralProposalEdit':'openReviewerEdit')+'(&quot;'+p.id+'&quot;)">✏️ Selbst bearbeiten</button>'+
       '<button class="btn2" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="openForwardProposal(&quot;'+p.id+'&quot;)">↗️ '+(p.status==='in_bearbeitung'?'Zur Prüfung weiterleiten':'Erneut weiterleiten')+'</button>'+
       '<button class="btn1" style="margin:0;width:auto;padding:8px 12px;font-size:12px" onclick="approveProposal(&quot;'+p.id+'&quot;)">✅ Freigeben</button>'+
     '</div>'
@@ -2350,9 +2352,10 @@ function openProposalView(id) {
   document.getElementById('pv-title').textContent = proposalKindLabel(p) + p.target_name;
   var body = '';
   if (p.kind === 'general') {
-    var gd = p.proposed_data || {};
+    var gd = p.reviewer_data || p.proposed_data || {};
     body += '<div><b>Rubrik / Funktion:</b> ' + (gd.category||'—') + '</div>';
     body += '<div style="margin-top:8px;white-space:pre-wrap">' + (gd.description||'') + '</div>';
+    if (p.reviewer_data) body += '<div style="color:var(--mu);font-size:12px;margin-top:6px">(vom Prüfer geändert)</div>';
   } else {
     if (p.original_data) body += '<div style="color:var(--mu);margin-bottom:12px"><b>Bisherige Daten:</b><br>' + (renderProposalDataHtml(p.original_data)||'—') + '</div>';
     var dd = p.reviewer_data || p.proposed_data || {};
@@ -2368,11 +2371,11 @@ function openProposalView(id) {
 
   if (canReviewerApprove && !canAdminAct) {
     actions.push('<button class="btn1" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');reviewerApproveDirect(\''+p.id+'\')">✅ Zustimmen</button>');
-    if (p.kind !== 'general') actions.push('<button class="btn2" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');openReviewerEdit(\''+p.id+'\')">✏️ Bearbeiten</button>');
+    actions.push('<button class="btn2" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');'+(p.kind==='general'?'openGeneralProposalEdit':'openReviewerEdit')+'(\''+p.id+'\')">✏️ Bearbeiten</button>');
   }
   if (canAdminAct) {
     actions.push('<button class="btn1" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');approveProposal(\''+p.id+'\')">✅ Freigeben</button>');
-    if (p.kind !== 'general') actions.push('<button class="btn2" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');openReviewerEdit(\''+p.id+'\')">✏️ Selbst bearbeiten</button>');
+    actions.push('<button class="btn2" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');'+(p.kind==='general'?'openGeneralProposalEdit':'openReviewerEdit')+'(\''+p.id+'\')">✏️ Selbst bearbeiten</button>');
     actions.push('<button class="btn2" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');openForwardProposal(\''+p.id+'\')">↗️ '+(p.status==='in_bearbeitung'?'Weiterleiten':'Erneut weiterleiten')+'</button>');
     actions.push('<button class="btnX" style="margin:0;width:auto;padding:10px 16px;font-size:13px" onclick="cs(\'sh-proposal-view\');rejectProposal(\''+p.id+'\')">❌ Ablehnen</button>');
   }
@@ -2498,19 +2501,69 @@ function openReviewerEdit(id) {
 
 // 4) Allgemeiner Antrag (z.B. Futter-Vorschlag, Optimierungswunsch)
 function openGeneralProposalSheet() {
+  document.getElementById('gp-mode').value = 'new';
+  document.getElementById('gp-id').value = '';
+  document.getElementById('gp-sheet-title').textContent = '📝 Allgemeinen Antrag stellen';
   document.getElementById('gp-category').value = '';
   document.getElementById('gp-description').value = '';
+  document.getElementById('gp-submit-btn').textContent = '📨 Antrag senden';
+  document.getElementById('gp-error').textContent = '';
+  openSheet('sh-general-proposal');
+}
+
+// Admin (oder zugewiesene Prüfer/in) bearbeitet einen bestehenden allgemeinen Antrag
+function openGeneralProposalEdit(id) {
+  var p = PROPOSALS_CACHE.find(function(x){return x.id===id;}); if (!p) return;
+  var d = p.reviewer_data || p.proposed_data || {};
+  document.getElementById('gp-mode').value = 'edit';
+  document.getElementById('gp-id').value = p.id;
+  document.getElementById('gp-sheet-title').textContent = '✏️ Allgemeinen Antrag bearbeiten';
+  document.getElementById('gp-category').value = d.category || '';
+  document.getElementById('gp-description').value = d.description || '';
+  var isAdminEditing = CUR_USER && isAdmin(CUR_USER);
+  document.getElementById('gp-submit-btn').textContent = isAdminEditing ? '✅ Bearbeiten & Freigeben' : '📨 Geänderten Antrag senden';
   document.getElementById('gp-error').textContent = '';
   openSheet('sh-general-proposal');
 }
 
 async function submitGeneralProposal() {
+  var mode = document.getElementById('gp-mode').value;
   var category = document.getElementById('gp-category').value;
   var description = document.getElementById('gp-description').value.trim();
   var errEl = document.getElementById('gp-error');
   errEl.textContent = '';
   if (!category) { errEl.textContent = 'Bitte Rubrik auswählen'; return; }
   if (!description) { errEl.textContent = 'Bitte dein Anliegen beschreiben'; return; }
+
+  if (mode === 'edit') {
+    var id = document.getElementById('gp-id').value;
+    var isAdminEditing = CUR_USER && isAdmin(CUR_USER);
+    showLoading(isAdminEditing ? 'Wird freigegeben…' : 'Sende geprüften Antrag…');
+    try {
+      var updateData = { category: category, description: description };
+      var payload = isAdminEditing
+        ? { reviewer_data: updateData, status: 'freigegeben' }
+        : { reviewer_data: updateData, status: 'geprueft' };
+      var rE = await sb.from('proposals').update(payload).eq('id', id);
+      if (rE.error) throw rE.error;
+      await loadProposals();
+      renderAdminProposals();
+      renderMyProposals();
+      renderInbox();
+      hideLoading();
+      cs('sh-general-proposal');
+      if (isAdminEditing) {
+        toast('✅ Bearbeitet und freigegeben');
+        var pE = PROPOSALS_CACHE.find(function(x){return x.id===id;});
+        if (pE) notifyByEmail(pE.created_by, '✅ Antrag freigegeben in PigeonData', 'Dein allgemeiner Antrag (Rubrik: ' + category + ') wurde freigegeben.');
+      } else {
+        toast('✅ Geprüfter Antrag an Admin gesendet');
+        USERS.filter(isAdmin).forEach(function(a){ notifyByEmail(a.id, '✅ Antrag geprüft in PigeonData', 'Ein allgemeiner Antrag (Rubrik: ' + category + ') wurde geprüft und ist nun freigabebereit.'); });
+      }
+    } catch (e) { hideLoading(); errEl.textContent = '❌ ' + e.message; }
+    return;
+  }
+
   showLoading('Sende Antrag…');
   try {
     var r = await sb.from('proposals').insert({
@@ -2711,11 +2764,14 @@ async function rejectProposal(id) {
 
 async function approveProposal(id) {
   var p = PROPOSALS_CACHE.find(function(x){return x.id===id;}); if (!p) return;
-  if (!confirm('Antrag freigeben und Behandlungsinfo aktualisieren?')) return;
+  if (!confirm('Antrag freigeben' + (p.kind==='general' ? '?' : ' und Behandlungsinfo aktualisieren?'))) return;
   var data = p.reviewer_data || p.proposed_data || {};
   showLoading('Freigeben…');
   try {
-    if (p.kind === 'new') {
+    if (p.kind === 'general') {
+      // Allgemeine Anträge (z.B. Futter-/Optimierungsvorschläge) haben keine Behandlungsinfo-
+      // Struktur und werden beim Freigeben nicht in treatment_info übernommen.
+    } else if (p.kind === 'new') {
       var rIns = await sb.from('treatment_info').insert({
         name: p.target_name, category: data.category || 'krankheit',
         medikament: data.medikament||'', dosis: data.dosis||'', verabreichung: data.verabreichung||'',
