@@ -2489,7 +2489,8 @@ function openReviewerEdit(id) {
   document.getElementById('pr-category-wrap').style.display = 'none';
   fillProposalFormFields(p.reviewer_data || p.proposed_data);
   setProposalFieldsRequired(true);
-  document.getElementById('pr-submit-btn').textContent = '📨 Geänderten Vorschlag senden';
+  var isAdminEditing = CUR_USER && isAdmin(CUR_USER);
+  document.getElementById('pr-submit-btn').textContent = isAdminEditing ? '✅ Bearbeiten & Freigeben' : '📨 Geänderten Vorschlag senden';
   document.getElementById('pr-submit-btn').style.display = 'block';
   document.getElementById('pr-error').textContent = '';
   openSheet('sh-proposal-form');
@@ -2593,6 +2594,45 @@ async function submitProposalForm() {
       errEl.textContent = 'Bitte alle Felder außer „Nachbehandlung" ausfüllen'; return;
     }
     var id = document.getElementById('pr-id').value;
+    var pEdit = PROPOSALS_CACHE.find(function(x){return x.id===id;});
+    var isAdminEditing = CUR_USER && isAdmin(CUR_USER);
+
+    if (isAdminEditing) {
+      // Admin bearbeitet direkt selbst -> sofort übernehmen, kein separater Freigabe-Schritt nötig
+      var targetNameEdit = pEdit ? pEdit.target_name : document.getElementById('pr-target-name').value;
+      var kindEdit = pEdit ? pEdit.kind : 'edit';
+      showLoading('Wird übernommen…');
+      try {
+        if (kindEdit === 'new') {
+          var rInsE = await sb.from('treatment_info').insert({
+            name: targetNameEdit, category: (pEdit && pEdit.proposed_data && pEdit.proposed_data.category) || 'krankheit',
+            medikament: fields.medikament||'', dosis: fields.dosis||'', verabreichung: fields.verabreichung||'',
+            dauer: fields.dauer||'', nachbehandlung: fields.nachbehandlung||''
+          });
+          if (rInsE.error) throw rInsE.error;
+        } else {
+          var rUpdE = await sb.from('treatment_info').update({
+            medikament: fields.medikament||'', dosis: fields.dosis||'', verabreichung: fields.verabreichung||'',
+            dauer: fields.dauer||'', nachbehandlung: fields.nachbehandlung||''
+          }).eq('name', targetNameEdit);
+          if (rUpdE.error) throw rUpdE.error;
+        }
+        var rStatE = await sb.from('proposals').update({ reviewer_data: fields, status: 'freigegeben' }).eq('id', id);
+        if (rStatE.error) throw rStatE.error;
+        await loadTreatmentInfo();
+        await loadProposals();
+        renderAdminProposals();
+        renderInbox();
+        if (document.getElementById('admin-tab-info') && document.getElementById('admin-tab-info').style.display !== 'none') renderAdminTreatmentInfo();
+        hideLoading();
+        cs('sh-proposal-form');
+        toast('✅ Bearbeitet und freigegeben');
+        if (pEdit) notifyByEmail(pEdit.created_by, '✅ Antrag freigegeben in PigeonData', 'Dein Antrag für „' + targetNameEdit + '" wurde freigegeben und übernommen.');
+      } catch (e) { hideLoading(); errEl.textContent = '❌ ' + e.message; }
+      return;
+    }
+
+    // Zugewiesener Prüfer (kein Admin) -> wie bisher: geht zur finalen Freigabe an den Admin zurück
     showLoading('Sende geprüften Vorschlag…');
     try {
       var r3 = await sb.from('proposals').update({ reviewer_data: fields, status: 'geprueft' }).eq('id', id);
@@ -5987,4 +6027,3 @@ window.addEventListener('load', function(){ fillYearDropdown(); setTimeout(sbIni
 </script>
 </body>
 </html>
-
