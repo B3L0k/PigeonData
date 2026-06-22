@@ -40,20 +40,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .user-add{background:transparent;border:2px dashed var(--bdr);border-radius:16px;padding:16px 10px;text-align:center;cursor:pointer;color:var(--mu)}
 .user-add:active{border-color:var(--acc);color:var(--acc)}
 .user-add .ut-av{background:transparent;border:2px solid var(--bdr);color:var(--mu);font-size:28px}
-/* PIN PAD */
-.pin-screen{position:fixed;inset:0;z-index:1001;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
-.pin-screen.hidden{display:none}
-.pin-title{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:6px}
-.pin-sub{color:var(--mu);font-size:13px;margin-bottom:30px}
-.pin-dots{display:flex;gap:16px;margin-bottom:36px}
-.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--bdr);background:transparent;transition:background .15s}
-.pin-dot.filled{background:var(--acc);border-color:var(--acc)}
-.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px}
-.pin-btn{background:var(--sur);border:1px solid var(--bdr);border-radius:14px;padding:18px;font-size:22px;font-weight:600;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;color:var(--tx)}
-.pin-btn:active{background:var(--sur2);border-color:var(--acc)}
-.pin-btn.del{font-size:18px;color:var(--mu)}
-.pin-btn.empty{background:transparent;border-color:transparent;cursor:default}
-.pin-error{color:var(--red);font-size:13px;margin-top:16px;min-height:20px;text-align:center}
 /* ACCOUNT BAR */
 .acc-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(124,106,245,.1);border-radius:20px;cursor:pointer;margin-left:auto}
 .acc-bar .acc-av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;position:relative;flex-shrink:0}
@@ -1259,7 +1245,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
 // DATA
 // ============================================================
 var DB = { pigeons: [], logs: [], notes: [] };
-var USERS = [];      // [{id, name, pin, photo}]
+var USERS = [];      // [{id, name, photo}]
 var CUR_USER = null; // current user object
 
 function loadUsers() {
@@ -4037,27 +4023,36 @@ function toast(msg) {
 // HANDBOOKS
 // ============================================================
 var USER_HANDBOOK = [
-  { title: '🏠 Startseite', content: 'Die Startseite begrüßt dich mit deinem Namen und zeigt eine Übersicht: Anzahl deiner Tauben, Einträge und den Gesundheitsstatus. Darunter findest du deine Postbox für Nachrichten sowie die letzten Einträge.' },
-  { title: '＋ Eintrag erfassen', content: 'Tippe unten rechts auf das ＋ um schnell einen Eintrag zu erstellen. Im Menü stehen zur Auswahl:\n• <span class="dove-ico"></span> Neue Taube anlegen\n• ⚖️ Wiegen – Gewicht einer Taube erfassen\n• 🌾 Füttern – Fütterung mit Futter, Menge & Supplement dokumentieren\n• 👨‍⚕️ Tierarzt – Tierarztbesuch mit Befund & Behandlung erfassen\n• 💊 Medikation – Medikament, Dosierung & Verabreichungsweg eintragen\n\nJe nach Kategorie erscheint ein Formular mit passenden Feldern. Immer Taube, Datum und Uhrzeit angeben.' },
-  { title: '✉️ Postbox', content: 'Die Postbox befindet sich auf der Startseite. Tippe auf den ✉️-Bereich um sie aufzuklappen.\n\nUngelesene Nachrichten werden mit einem Badge (Zahl) angezeigt. Tippe auf eine Nachricht um sie vollständig zu lesen und zu beantworten.\n\n• ✏️ Neue Nachricht – Tippe auf "Neue Nachricht schreiben" um einem anderen User zu schreiben\n• ↩️ Antworten – Direkt aus der Nachrichtenansicht antworten\n• 🗑️ Löschen – Nachricht "Für mich" oder "Für alle" löschen' },
-  { title: '<span class="dove-ico"></span> Tauben', content: 'Hier verwaltest du alle deine Pflegetauben.\n\nNeue Taube anlegen: Tippe auf das ＋ um eine neue Taube anzulegen. Felder:\n• Name, Ringnummer, Rasse, Geschlecht, Jahrgang, Farbe\n• Unterbringung (Box, Voliere, Schlag oder Freitext)\n• 📷 Profilfoto der Taube\n• 🏥 Gesundheit: Zustand, Symptome, Krankheiten/Parasiten\n• 📍 Fundort & Datum der Sicherung\n• Auswilderungs- und Euthanasiedaten\n\nProfile sind nach Gesundheitszustand in Reiter eingeteilt: Alle · Gesund · Krank · Verstorben · Euthanasie.\n\nTaube antippen → Detailansicht mit allen Infos, Einträgen und Buttons für Bearbeiten, Wiegen und Löschen.' },
-  { title: '📒 Tagebuch', content: 'Das Tagebuch zeigt alle Einträge chronologisch. Filter:\n• Taube: Dropdown oben – alle oder einzelne Taube\n• Typ: Reiter Alle / Gewicht / Futter / Tierarzt / Medikation\n• Sortierung: 🔽 Neueste zuerst / 🔼 Älteste zuerst\n\nJeden Eintrag kannst du ✏️ bearbeiten oder 🗑️ löschen.\n\nExport: 📊 Excel/CSV oder 📄 PDF – im PDF-Kopf erscheint das vollständige Taubenprofil.' },
-  { title: '📊 Statistik', content: 'Die Statistik wertet deine Einträge grafisch aus. Wähle oben eine Taube als Filter.\n\nReiter:\n• ⚖️ Wiegen – Gewichtsbalkendiagramm der letzten 10 Messungen + vollständige Liste\n• 🌾 Füttern – Fütterungen pro Tag, häufigste Futtersorten und Supplements\n• 👨‍⚕️ Tierarzt – Besuche pro Monat + alle Einträge\n• 💊 Medikation – häufigste Medikamente + alle Einträge\n\nDarunter: Balkendiagramm Gesamt/Ausgewildert/Verstorben/Euthanasie sowie Aufschlüsselung nach Ort der Sicherung.' },
-  { title: '📝 Notizen', content: 'Hier kannst du eigene Notizen anlegen – unabhängig von Tauben und Einträgen.\n\nNeue Notiz: ＋ Neu Tippen.\n\nFelder:\n• Titel (optional)\n• Kategorie: Behandlung, Beobachtung, Erinnerung, Tierarzt, Fütterung, Sonstiges\n• Notiztext (Freitext)\n• Verknüpfte Taube (optional)\n• Datum\n\nNotizen sind durchsuchbar und können bearbeitet und gelöscht werden.' },
-  { title: '⚙️ Einstellungen', content: '• 📤 Daten exportieren – Backup als JSON-Datei speichern\n• 📥 Daten importieren – Backup zurückspielen (zusammenführen oder ersetzen)\n• 🗑️ Alle Daten löschen – Löscht alle Tauben und Einträge dieses Profils\n• 📖 Benutzerhandbuch – Diese Anleitung\n\nProfilverwaltung (Avatar-Icon oben): PIN ändern, Benutzer wechseln.' },
-  { title: '👤 Profilverwaltung', content: 'Tippe oben rechts auf deinen Avatar-Button um das Profilmenü zu öffnen.\n\n• 🔒 PIN einrichten / ändern – Sichert deinen Account mit 4-stelligem PIN\n• 🔓 PIN entfernen – Account ohne PIN nutzen\n• 🚪 Benutzer wechseln – Zurück zur Profilauswahl\n• 🗑️ Profil löschen – Löscht deinen Account und alle Daten unwiderruflich' },
+  { title: '🏠 Startseite', content: 'Die Startseite begrüßt dich mit deinem Namen und zeigt eine Übersicht: Anzahl deiner Tauben, Einträge und den Gesundheitsstatus.\n\nDarunter findest du die Postbox. Auch eingeklappt siehst du dort einen Hinweis wie „📌 2 neue Nachrichten · 1 neuer Antrag", sobald etwas Neues wartet.\n\nGanz unten: deine letzten Einträge.' },
+  { title: '＋ Eintrag erfassen', content: 'Tippe unten rechts auf das ＋ um schnell einen Eintrag zu erstellen. Im Menü stehen zur Auswahl:\n• <span class="dove-ico"></span> Neue Taube anlegen\n• ⚖️ Wiegen – Gewicht einer Taube erfassen\n• 🌾 Füttern – Fütterung mit Futter, Menge & Supplement dokumentieren\n• 👨‍⚕️ Tierarzt – Tierarztbesuch mit Befund & Behandlung erfassen\n• 💊 Medikation – ein oder mehrere Medikamente eintragen, jedes mit eigener Dosierung, Verabreichung und Dauer\n\nJe nach Kategorie erscheint ein Formular mit passenden Feldern. Immer Taube, Datum und Uhrzeit angeben.' },
+  { title: '<span class="dove-ico"></span> Tauben', content: 'Hier verwaltest du alle deine Pflegetauben. Reiter oben: Aktuell · Gesund · Krank · Verstorben · Euthanasie · 📦 Archiviert.\n\nNeue Taube anlegen: Tippe auf das ＋. Felder:\n• Name, Ringnummer, Rasse, Geschlecht, Jahrgang, Farbe, Unterbringung, Profilfoto\n• 🏥 Gesundheitszustand – steuert, welche weiteren Felder du siehst (z.B. erscheinen Auswilderungsfelder nur bei „Gesund", Euthanasie-Felder nur bei „Euthanasie")\n• Symptome / Krankheiten & Parasiten – beim Antippen öffnet sich automatisch ein Behandlungs-Hinweis-Fenster (siehe nächster Punkt)\n• 📍 Ort & Datum der Sicherung (Pflichtfeld)\n• Auswilderungsdaten (Pflicht, sobald Ort oder Stadt der Auswilderung befüllt ist)\n\nTaube löschen: Du kannst wählen zwischen „Profil löschen, Daten behalten" (Taube verschwindet aus deiner Liste, fließt aber weiter in die Statistik ein) oder „Komplett löschen" (unwiderruflich, auch aus der Statistik).\n\nTaube antippen → Detailansicht mit allen Infos und Einträgen.' },
+  { title: '💊 Behandlungs-Hinweise', content: 'Wählst du im Taubenprofil ein Symptom oder eine Krankheit/Parasit aus, öffnet sich automatisch ein Fenster mit Medikament, Dosis, Verabreichung, Dauer und Nachbehandlung – soweit hinterlegt (sonst steht „In Arbeit").\n\n• Häkchen „Diesen Hinweis für mich nicht mehr anzeigen" – blendet das Fenster künftig für genau dieses Symptom/diese Krankheit aus. Zurücksetzbar in den Einstellungen.\n• ✏️ Änderung vorschlagen – hast du einen Fehler bemerkt oder einen besseren Hinweis? Über diesen Button schickst du einen Vorschlag an den Admin (läuft über die Postbox, siehe dort). Das Taubenformular bleibt dabei offen, du kannst direkt weiterarbeiten.' },
+  { title: '📒 Tagebuch', content: 'Das Tagebuch zeigt alle Einträge chronologisch. Filter-Reiter oben: Alle / Gewicht / Futter / Tierarzt / Medikation.\n\nJeden Eintrag kannst du ✏️ bearbeiten oder 🗑️ löschen.\n\nExport: 📊 Excel/CSV oder 📄 PDF.' },
+  { title: '📊 Statistik', content: 'Oben wählst du zwischen 🕊️ Meine Tauben und 🌍 Alle Tauben (projektweit). Filter „Jahr der Sicherung" schränkt beides auf ein bestimmtes Jahr ein.\n\nMeine/Alle Tauben zeigt: Balkendiagramm Gesamt/Ausgewildert/Verstorben/Euthanasie sowie eine aufklappbare Liste nach Ort der Sicherung.\n\nDarunter, nur bei „Meine Tauben": Reiter ⚖️ Wiegen / 🌾 Füttern / 👨‍⚕️ Tierarzt / 💊 Medikation mit Diagrammen, Listen und eigenem Export (Excel/CSV & PDF) – der Export berücksichtigt automatisch den gewählten Reiter, die gewählte Taube und das gewählte Jahr.' },
+  { title: '📝 Notizen', content: 'Hier kannst du eigene Notizen anlegen – unabhängig von Tauben und Einträgen.\n\nFelder:\n• Titel (optional), Kategorie (Behandlung, Beobachtung, Erinnerung, Tierarzt, Fütterung, Sonstiges)\n• Notiztext, Datum\n• Verknüpfte Taube (optional – Tauben, die archiviert sind, stehen hier nicht zur Auswahl)\n\nNotizen sind durchsuchbar und können bearbeitet und gelöscht werden.' },
+  { title: '✉️ Postbox', content: 'Die Postbox auf der Startseite hat zwei Reiter:\n\n✉️ Nachrichten – ungelesene Nachrichten zeigen ein Badge. Nachricht antippen zum Lesen/Antworten. Löschen „Für mich" (nur bei dir entfernt) oder „Für alle" (bei allen Empfängern entfernt). Über „✏️ Neue Nachricht schreiben" kannst du selbst an einen anderen User schreiben.\n\n📋 Anträge – zeigt deine eigenen eingereichten Anträge mit Status (In Bearbeitung, Weitergeleitet, Geprüft, Freigegeben, Abgelehnt) sowie Anträge, die dir zur Prüfung zugewiesen wurden (dort kannst du antippen, den Inhalt lesen, und dann „✅ Zustimmen" oder „✏️ Bearbeiten" wählen). Reiter „Aktiv"/„📦 Archiv" blendet abgeschlossene Anträge aus oder zeigt nur diese.\n\nÜber „➕ Neue Krankheit/Parasit/Symptome vorschlagen" kannst du einen komplett neuen Eintrag für die Behandlungs-Hinweise beantragen (alle Felder außer „Nachbehandlung" sind dabei Pflicht, inkl. der Angabe, ob ein Tierarztbesuch nötig ist).\n\nÜber „📝 Allgemeinen Antrag stellen" kannst du sonstige Wünsche (z.B. neues Futter, Verbesserungsvorschläge) einreichen und einer Rubrik der App zuordnen.\n\nJeder Antrag wird zunächst vom Admin geprüft, der ihn ablehnen, zur Prüfung an eine andere Person weiterleiten oder direkt freigeben kann.' },
+  { title: '👤 Profil verwalten', content: 'Tippe oben rechts auf deinen Avatar.\n\n• Profilbild ändern\n• 🏙️ Projektzugehörigkeit ändern\n• E-Mail-Adresse ändern\n• Passwort ändern\n• 💾 Datensicherung – eigene Daten als Datei exportieren' },
+  { title: '📁 Dokumente', content: 'Über das Ordner-Symbol oben rechts erreichst du wichtige Dokumente, z.B. das Päppel Handout als PDF.' },
+  { title: '⚙️ Einstellungen', content: 'Über das Zahnrad oben rechts:\n• 📖 Benutzerhandbuch – diese Anleitung\n• 🔄 Behandlungs-Hinweise zurücksetzen – blendet alle von dir zuvor ausgeblendeten Hinweisfenster wieder ein' },
+  { title: '🔑 Passwort vergessen', content: 'Falls du dein Passwort nicht mehr weißt: Tippe auf dem Anmeldebildschirm auf „Passwort vergessen?", gib deinen Benutzernamen ein und du erhältst einen Link per E-Mail zum Zurücksetzen.' },
 ];
 
 var ADMIN_HANDBOOK = [
-  { title: '👑 Administratorprofil', content: 'Das erste angelegte Profil ist automatisch Administrator. Der Admin hat erweiterte Rechte gegenüber normalen Usern:\n\n• Alle Userprofile sehen und verwalten\n• Neue Profile anlegen\n• Profile anderer User löschen (auch PIN-geschützte)\n• Nachrichten an alle oder einzelne User senden\n• Zugriff auf alle Profile ohne PIN-Eingabe\n• Umfassende Statistiken aller User einsehen' },
-  { title: '🏠 Startseite (Admin)', content: 'Die Startseite des Admins ist reduziert, da der Admin keine eigenen Tauben verwaltet.\n\nSichtbar:\n• Begrüßung mit Profilname\n• Postbox für Nachrichten\n• Letzte Einträge (falls vorhanden)' },
-  { title: '👑 Admin-Bereich', content: 'Der Admin-Bereich ist über die untere Navigation erreichbar (👑 Admin).\n\nDrei Reiter:\n\n👥 User – Liste aller Profile mit Tauben- und Einträgezähler, Löschen-Button pro User, ＋ Neues Profil anlegen\n\n✉️ Nachrichten – Nachrichten an einzelne User oder alle senden, Verlauf gesendeter Nachrichten\n\n📊 Übersicht – wird in Statistik gezeigt (siehe unten)' },
-  { title: '📊 Statistik (Admin)', content: 'Die Admin-Statistik bietet zwei Filter:\n\n1️⃣ Benutzer wählen – Zeigt Einträge eines bestimmten Users\n2️⃣ Taube wählen – Filtert zusätzlich auf eine einzelne Taube des Users\n\nEinträge-Zähler (reine Zahlen):\n• Gesamt · ⚖️ Gewicht · 🌾 Füttern · 👨‍⚕️ Tierarzt · 💊 Medikation\n\nTauben-Übersicht (userübergreifend):\n• Alle · Gesund · Krank · Verstorben · Euthanasie\n• Aufschlüsselung Krankheiten/Parasiten bei "Krank"\n• Todesursachen bei "Verstorben"\n• Euthanasie-Gründe bei "Euthanasie"' },
-  { title: '👥 Userverwaltung', content: 'Erreichbar über 👑 Admin → Reiter "👥 User".\n\nNeues Profil anlegen:\n• Tippe auf ＋ Neues Profil anlegen\n• Name, optionales Profilfoto, 4-stelliger PIN (optional)\n• Checkbox "Als Admin anlegen" für weitere Admins\n• Das erste Profil wird immer automatisch Admin\n\nProfil löschen:\n• ✕-Button auf der Profilkachel in der Benutzerauswahl (nur wenn Admin eingeloggt)\n• 🗑️ Löschen-Button in der User-Liste im Admin-Bereich\n• Löscht Profil und ALLE zugehörigen Daten unwiderruflich' },
-  { title: '✉️ Nachrichten (Admin)', content: 'Admin → Reiter "✉️ Nachrichten".\n\nNachricht senden:\n• Empfänger wählen: einzelner User oder "📢 Alle Benutzer"\n• Nachricht eingeben und senden\n\nNachrichten löschen:\n• 🗑️ Für mich löschen – nur aus eigener Ansicht entfernen\n• 🗑️ Für alle löschen – bei allen Empfängern entfernen\n\nUser empfangen Nachrichten in ihrer Postbox auf der Startseite.' },
-  { title: '🔐 Zugriffsrechte', content: 'Profilauswahl:\n• Admin eingeloggt: alle Profile sichtbar, direkt wählbar ohne PIN\n• Normaler User: nur eigenes Profil sichtbar beim Wechsel\n\nAdmin kann ohne PIN-Eingabe auf alle Profile zugreifen.\n\nAdmin kann Profile anderer User löschen, unabhängig davon ob diese PIN-geschützt sind.\n\nNur der Admin sieht den ＋-Button zum Anlegen neuer Profile.' },
-  { title: '⚙️ Einstellungen (Admin)', content: 'Gleiche Funktionen wie User:\n• 📤 Daten exportieren\n• 📥 Daten importieren\n• 🗑️ Alle Daten löschen (nur Admin-eigene Daten)\n• 📖 Administratorhandbuch\n\nProfilverwaltung über Avatar-Button:\n• PIN verwalten\n• ➕ Neues Profil anlegen\n• 🚪 Benutzer wechseln\n• 🗑️ Profil löschen' },
+  { title: '👑 Administratorrolle', content: 'Als Admin hast du erweiterte Rechte gegenüber normalen Usern:\n• Alle Userprofile sehen, anlegen, bearbeiten und löschen\n• Nachrichten an alle oder einzelne User senden\n• Anträge aller User prüfen, weiterleiten, freigeben oder ablehnen – jederzeit, auch wenn ein Antrag schon an jemand anderen weitergeleitet wurde\n• Aufgaben anlegen und verwalten\n• Behandlungs-Hinweise (Symptome/Krankheiten) zentral pflegen\n• Umfassende, projektweite Statistiken einsehen' },
+  { title: '🏠 Startseite (Admin)', content: 'Statt der Tauben-Kacheln zeigt deine Startseite:\n• Eine Karte mit der wichtigsten offenen Aufgabe (höchste Priorität, nächste Frist)\n• „🆕 Zuletzt angelegte User" – die 3 zuletzt angelegten Profile\n• Postbox mit Hinweis-Badge für neue Nachrichten und Anträge' },
+  { title: '＋ Schnellerfassung (Admin)', content: 'Das ＋-Menü zeigt für dich andere Optionen als für normale User:\n• 👤 Profil anlegen\n• ✅ Aufgabe anlegen' },
+  { title: '👑 Administration – Übersicht', content: 'Erreichbar über die untere Navigation (👑 Admin), vier Reiter:\n\n👥 User – alle Profile verwalten\n✉️ Nachrichten – Nachrichten senden + Anträge bearbeiten\n✅ Aufgaben – interne Aufgabenverwaltung\n📋 Infos – Behandlungs-Hinweise pflegen' },
+  { title: '👥 User verwalten', content: 'Reiter „👥 User":\n• ＋ Neues Profil anlegen – legt ein neues Benutzerkonto an\n• ✏️ Name ändern – ändert den angezeigten Namen eines Profils\n• 🔑 PW zurücksetzen – setzt das Passwort eines Users zurück\n• 🗑️ Löschen – löscht das Profil vollständig, inklusive des Login-Kontos (die E-Mail-Adresse wird dadurch für ein neues Profil wieder verwendbar)' },
+  { title: '✉️ Nachrichten & Anträge (Admin)', content: 'Reiter „✉️ Nachrichten", darin zwei Unter-Reiter:\n\n✉️ Nachrichten – Empfänger wählen (einzelner User oder „📢 Alle Benutzer"), Nachricht senden, Verlauf gesendeter Nachrichten einsehen.\n\n📋 Anträge – alle eingereichten Anträge (neue Behandlungs-Hinweise, Änderungsvorschläge, allgemeine Anträge). Antrag antippen zeigt den vollständigen Inhalt. Für offene Anträge stehen dir zur Verfügung:\n• ❌ Ablehnen\n• ↗️ Zur Prüfung weiterleiten (an eine bestimmte Person)\n• ✏️ Selbst bearbeiten – du änderst den Vorschlag direkt\n• ✅ Freigeben – übernimmt den Vorschlag in die Behandlungs-Hinweise bzw. legt einen neuen Eintrag an\n\nDiese Möglichkeiten stehen dir immer zur Verfügung, auch wenn ein Antrag bereits an jemand anderen zur Prüfung weitergeleitet wurde. Reiter „Aktiv"/„📦 Archiv" blendet abgeschlossene (freigegebene/abgelehnte) Anträge aus oder zeigt nur diese. Anträge können von dir oder der ursprünglichen antragstellenden Person gelöscht werden.' },
+  { title: '✅ Aufgaben', content: 'Reiter „✅ Aufgaben": eigene interne Aufgabenverwaltung, unabhängig von Tauben.\n\nFelder: Titel, Beschreibung, Priorität (niedrig/mittel/hoch/dringend), Frist, verknüpfter User (optional).\n\nDie wichtigste offene Aufgabe (höchste Priorität, nächste Frist) wird automatisch auf der Admin-Startseite angezeigt.' },
+  { title: '📋 Behandlungs-Hinweise pflegen', content: 'Reiter „📋 Infos": hier verwaltest du die Liste aller Symptome und Krankheiten/Parasiten samt Medikament, Dosis, Verabreichung, Dauer und Nachbehandlung, die Usern beim Anlegen einer Taube angezeigt werden.\n\n＋ Neuer Eintrag legt einen weiteren Symptom-/Krankheitseintrag an. ✏️ und 🗑️ bearbeiten bzw. löschen bestehende Einträge.\n\nÄnderungen wirken sich sofort für alle User aus – auch ohne dass diese sich neu einloggen müssen.' },
+  { title: '📊 Statistik (Admin)', content: 'Oben wählst du zwischen 🕊️ Tauben und 👥 User.\n\n🕊️ Tauben – sechs Ansichten: Alle Tauben, Nach Fundort (Stadt), Auswilderung & Auswilderungsort, Krankheiten, Medikamente, Taubenschläge. Filter Status, Jahr der Sicherung und Taubenschlag gelten dabei für (fast) alle Ansichten; „Jahr der Auswilderung" zusätzlich bei der Auswilderungs-Ansicht. Jede Ansicht ist als Excel/CSV oder PDF exportierbar – Personennamen werden dabei bewusst nicht angezeigt.\n\n👥 User – Anzahl der User, Projektzugehörigkeit, Tauben pro User und Aktivität der User. Die beiden letzteren zeigen anonyme Bezeichnungen wie „Profil 1" statt Namen (Pseudonymisierung zur Vermeidung einer unmittelbaren Verknüpfung – eine vollständige Anonymisierung ist technisch nicht gegeben, siehe Datenschutzerklärung).' },
+  { title: '📝 Notizen (Admin)', content: 'Wie bei normalen Usern, mit einem Unterschied: Statt einer Taube verknüpfst du eine Notiz mit einem bestehenden User-Profil.' },
+  { title: '👤 Profil verwalten', content: 'Tippe oben rechts auf deinen Avatar.\n\n• Profilbild ändern\n• E-Mail-Adresse ändern\n• Passwort ändern\n• 💾 Datensicherung – eigene Daten als Datei exportieren' },
+  { title: '📁 Dokumente', content: 'Über das Ordner-Symbol oben rechts erreichst du wichtige Dokumente, z.B. das Päppel Handout als PDF.' },
+  { title: '⚙️ Einstellungen', content: 'Über das Zahnrad oben rechts:\n• 📖 Administratorhandbuch – diese Anleitung\n• 🔄 Behandlungs-Hinweise zurücksetzen – blendet von dir zuvor ausgeblendete Hinweisfenster wieder ein' },
 ];
+
 
 function closeHandbook() { cs('sh-handbook'); }
 function openHandbook() {
@@ -4663,10 +4658,6 @@ function numBox(label, val, color) {
 // ============================================================
 // MULTI-USER SYSTEM
 // ============================================================
-var PIN_BUFFER = '';
-var PIN_MODE = 'login'; // 'login' | 'set' | 'change'
-var PIN_TARGET_USER = null;
-
 function isAdmin(u) { return u && u.role === 'admin'; }
 
 function renderLoginScreen() {
@@ -5238,7 +5229,6 @@ async function loadUsers() {
       id:    row.id,
       name:  row.full_name || row.username || row.email || '?',
       username: row.username || '',
-      pin:   row.pin  || '',
       photo: row.avatar_url || row.photo || '',
       role:  row.role || 'user',
       email: row.email || '',
@@ -5261,7 +5251,7 @@ async function loadUsers() {
               id: row.id,
               name: row.full_name || row.username || '?',
               username: row.username || '',
-              pin: '', photo: '', role: row.role || 'user', email: '',
+              photo: '', role: row.role || 'user', email: '',
               project: '', hiddenInfo: [], emailNotifications: true, must_change_pw: false
             });
           }
@@ -5286,7 +5276,6 @@ async function saveUsers() {
   const { error } = await sb.from('profiles').upsert({
     id:          SB_USER.id,
     full_name:   me.name,
-    pin:         me.pin  || '',
     avatar_url:  me.photo || '',
     role:        me.role  || 'user',
     email:       me.email || SB_USER.email || '',
@@ -5565,7 +5554,7 @@ async function onAuthSuccess(user) {
   let profile = USERS.find(u => u.id === user.id);
   if (!profile) {
     // Profil neu anlegen falls noch nicht vorhanden (Fallback)
-    profile = { id: user.id, name: user.email.split('@')[0], username: user.email.split('@')[0], pin:'', photo:'', role: USERS.length===0?'admin':'user', email: user.email, must_change_pw: false };
+    profile = { id: user.id, name: user.email.split('@')[0], username: user.email.split('@')[0], photo:'', role: USERS.length===0?'admin':'user', email: user.email, must_change_pw: false };
     USERS.push(profile);
   }
   hideLoading();
