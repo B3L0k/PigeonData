@@ -191,8 +191,35 @@ select.fi option{background:var(--sur);color:var(--tx)}
     <button class="btn1" onclick="doLogin()">Anmelden</button>
     <div id="lg-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
     <div style="text-align:center;margin-top:8px">
-      <a href="#" onclick="event.preventDefault();openForgotPasswordSheet()" style="color:var(--acc);font-size:13px;text-decoration:none">Passwort vergessen?</a>
+      <span style="color:var(--mu);font-size:13px">Passwort vergessen? Bitte wende dich an die Administration, um es zurücksetzen zu lassen.</span>
     </div>
+  </div>
+  <div style="position:absolute;bottom:18px;left:0;right:0;text-align:center;font-size:12px;color:var(--mu)">
+    <a href="AGB_PigeonData.html" target="_blank" style="color:var(--mu);text-decoration:underline">AGB</a>
+    &nbsp;·&nbsp;
+    <a href="datenschutz_PigeonData.html" target="_blank" style="color:var(--mu);text-decoration:underline">Datenschutz</a>
+    &nbsp;·&nbsp;
+    <a href="impressum_PigeonData.html" target="_blank" style="color:var(--mu);text-decoration:underline">Impressum</a>
+  </div>
+</div>
+
+<!-- LEGAL CONSENT SCREEN (für wiederkehrende User bei aktualisierten Dokumenten) -->
+<div class="login-screen hidden" id="legal-consent-screen">
+  <div class="login-logo">Pigeon<span>Data</span></div>
+  <div class="login-sub">Aktualisierte Nutzungsbedingungen</div>
+  <div style="width:100%;max-width:340px">
+    <p style="color:var(--mu);font-size:13px;margin-bottom:18px">Unsere Nutzungsbedingungen und/oder Datenschutzerklärung wurden aktualisiert. Bitte bestätige sie erneut, um die App weiter zu nutzen.</p>
+    <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--mu);margin-bottom:10px;cursor:pointer">
+      <input type="checkbox" id="lc-consent-agb" style="width:auto;margin-top:2px">
+      <span>Ich habe die <a href="AGB_PigeonData.html" target="_blank" style="color:var(--acc)">Nutzungsbedingungen (AGB)</a> gelesen und akzeptiere sie.</span>
+    </label>
+    <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--mu);margin-bottom:16px;cursor:pointer">
+      <input type="checkbox" id="lc-consent-ds" style="width:auto;margin-top:2px">
+      <span>Ich habe die <a href="datenschutz_PigeonData.html" target="_blank" style="color:var(--acc)">Datenschutzerklärung</a> gelesen und akzeptiere sie.</span>
+    </label>
+    <button class="btn1" onclick="doLegalConsentOnly()">Zustimmen und fortfahren</button>
+    <button class="btn2" onclick="logoutUser()">Abmelden</button>
+    <div id="lc-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
   </div>
 </div>
 
@@ -216,6 +243,16 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div style="width:100%;max-width:340px">
     <div class="fg"><label class="fl">Neues Passwort</label><input class="fi" id="fpw-new" type="password" autocomplete="new-password"></div>
     <div class="fg"><label class="fl">Passwort bestätigen</label><input class="fi" id="fpw-new2" type="password" autocomplete="new-password"></div>
+    <div id="fpw-consent-block" style="margin:10px 0 4px">
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--mu);margin-bottom:10px;cursor:pointer">
+        <input type="checkbox" id="fpw-consent-agb" style="width:auto;margin-top:2px">
+        <span>Ich habe die <a href="AGB_PigeonData.html" target="_blank" style="color:var(--acc)">Nutzungsbedingungen (AGB)</a> gelesen und akzeptiere sie.</span>
+      </label>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--mu);cursor:pointer">
+        <input type="checkbox" id="fpw-consent-ds" style="width:auto;margin-top:2px">
+        <span>Ich habe die <a href="datenschutz_PigeonData.html" target="_blank" style="color:var(--acc)">Datenschutzerklärung</a> gelesen und akzeptiere sie.</span>
+      </label>
+    </div>
     <button class="btn1" onclick="doForcePasswordChange()">Passwort festlegen & weiter</button>
     <div id="fpw-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
   </div>
@@ -1210,6 +1247,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="hrow" onclick="clearAll()"><div class="hi">🗑️</div><div class="hinfo"><div class="ht">Alle Daten löschen</div><div class="hs2">Nicht rückgängig machbar</div></div></div>
   <div class="dvd"></div>
   <div class="hrow" onclick="openHandbook()"><div class="hi">📖</div><div class="hinfo"><div class="ht">Benutzerhandbuch</div><div class="hs2">Anleitung und Funktionsübersicht</div></div><div class="ibtn">→</div></div>
+  <div class="hrow" onclick="openSheet('sh-legal')"><div class="hi">📜</div><div class="hinfo"><div class="ht">Rechtliches</div><div class="hs2">AGB, Datenschutz, Impressum</div></div><div class="ibtn">→</div></div>
   <div class="hrow" onclick="resetTreatmentInfoHints()"><div class="hi">🔄</div><div class="hinfo"><div class="ht">Behandlungs-Hinweise zurücksetzen</div><div class="hs2">Ausgeblendete Infofenster wieder einblenden</div></div></div>
   <div class="dvd"></div>
   <p style="color:var(--mu);font-size:13px;text-align:center">PigeonData v2.0<br>Alle Daten lokal gespeichert</p>
@@ -1228,6 +1266,23 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="handle"></div>
   <div class="stit">📁 Dokumente</div>
   <div class="hrow" onclick="openHandbuch()"><div class="hi">📘</div><div class="hinfo"><div class="ht">Päppel Handout</div><div class="hs2">PDF öffnen</div></div><div class="ibtn">→</div></div>
+ </div>
+</div>
+
+<!-- LEGAL SHEET -->
+<div class="overlay" id="sh-legal" onclick="oc(event,'sh-legal')">
+ <div class="sheet">
+  <div class="handle"></div>
+  <div class="stit">📜 Rechtliches</div>
+  <a href="AGB_PigeonData.html" target="_blank" style="text-decoration:none;color:inherit">
+    <div class="hrow"><div class="hi">📄</div><div class="hinfo"><div class="ht">Nutzungsbedingungen (AGB)</div></div><div class="ibtn">→</div></div>
+  </a>
+  <a href="datenschutz_PigeonData.html" target="_blank" style="text-decoration:none;color:inherit">
+    <div class="hrow"><div class="hi">🔒</div><div class="hinfo"><div class="ht">Datenschutzerklärung</div></div><div class="ibtn">→</div></div>
+  </a>
+  <a href="impressum_PigeonData.html" target="_blank" style="text-decoration:none;color:inherit">
+    <div class="hrow"><div class="hi">ℹ️</div><div class="hinfo"><div class="ht">Impressum</div></div><div class="ibtn">→</div></div>
+  </a>
  </div>
 </div>
 
@@ -4034,7 +4089,7 @@ var USER_HANDBOOK = [
   { title: '👤 Profil verwalten', content: 'Tippe oben rechts auf deinen Avatar.\n\n• Profilbild ändern\n• 🏙️ Projektzugehörigkeit ändern\n• E-Mail-Adresse ändern\n• Passwort ändern\n• 💾 Datensicherung – eigene Daten als Datei exportieren' },
   { title: '📁 Dokumente', content: 'Über das Ordner-Symbol oben rechts erreichst du wichtige Dokumente, z.B. das Päppel Handout als PDF.' },
   { title: '⚙️ Einstellungen', content: 'Über das Zahnrad oben rechts:\n• 📖 Benutzerhandbuch – diese Anleitung\n• 🔄 Behandlungs-Hinweise zurücksetzen – blendet alle von dir zuvor ausgeblendeten Hinweisfenster wieder ein' },
-  { title: '🔑 Passwort vergessen', content: 'Falls du dein Passwort nicht mehr weißt: Tippe auf dem Anmeldebildschirm auf „Passwort vergessen?", gib deinen Benutzernamen ein und du erhältst einen Link per E-Mail zum Zurücksetzen.' },
+  { title: '🔑 Passwort vergessen', content: 'Falls du dein Passwort nicht mehr weißt: Wende dich bitte an die Administration – sie kann dein Passwort zurücksetzen.' },
 ];
 
 var ADMIN_HANDBOOK = [
@@ -4663,6 +4718,7 @@ function isAdmin(u) { return u && u.role === 'admin'; }
 function renderLoginScreen() {
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('force-pw-screen').classList.add('hidden');
+  document.getElementById('legal-consent-screen').classList.add('hidden');
   var u = document.getElementById('lg-username');
   var p = document.getElementById('lg-password');
   if (u) u.value = '';
@@ -4734,12 +4790,41 @@ async function sendPasswordReset() {
   }
 }
 
+// Stand der Rechtsdokumente. Bei inhaltlichen Änderungen an AGB/Datenschutzerklärung
+// hier einfach das Datum aktualisieren (passend zum "Stand:"-Datum in den Dokumenten) –
+// alle User müssen dann beim nächsten Login automatisch erneut zustimmen.
+var LEGAL_DOCS_VERSION = '22. Juni 2026';
+
+function needsLegalConsent(profile) {
+  return !profile || profile.legalConsentVersion !== LEGAL_DOCS_VERSION;
+}
+
+async function recordLegalConsent() {
+  try {
+    await sb.from('legal_consents').insert({
+      user_id: SB_USER.id,
+      agb_version: LEGAL_DOCS_VERSION,
+      datenschutz_version: LEGAL_DOCS_VERSION,
+      user_agent: navigator.userAgent
+    });
+  } catch (e) { console.warn('Zustimmung konnte nicht protokolliert werden:', e.message); }
+  await sb.from('profiles').update({ legal_consent_version: LEGAL_DOCS_VERSION }).eq('id', SB_USER.id);
+  var me = USERS.find(function(x){ return x.id === SB_USER.id; });
+  if (me) me.legalConsentVersion = LEGAL_DOCS_VERSION;
+  if (CUR_USER) CUR_USER.legalConsentVersion = LEGAL_DOCS_VERSION;
+}
+
 function showForcePasswordScreen() {
   document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('legal-consent-screen').classList.add('hidden');
   document.getElementById('force-pw-screen').classList.remove('hidden');
   document.getElementById('fpw-new').value = '';
   document.getElementById('fpw-new2').value = '';
   document.getElementById('fpw-error').textContent = '';
+  document.getElementById('fpw-consent-agb').checked = false;
+  document.getElementById('fpw-consent-ds').checked = false;
+  var me = USERS.find(function(x){ return SB_USER && x.id === SB_USER.id; }) || CUR_USER;
+  document.getElementById('fpw-consent-block').style.display = needsLegalConsent(me) ? 'block' : 'none';
 }
 
 async function doForcePasswordChange() {
@@ -4748,17 +4833,53 @@ async function doForcePasswordChange() {
   var errEl = document.getElementById('fpw-error');
   if (!pw || pw.length < 6) { errEl.textContent = 'Passwort muss mind. 6 Zeichen haben'; return; }
   if (pw !== pw2) { errEl.textContent = 'Passwörter stimmen nicht überein'; return; }
+  var consentBlockVisible = document.getElementById('fpw-consent-block').style.display !== 'none';
+  if (consentBlockVisible) {
+    var agbOk = document.getElementById('fpw-consent-agb').checked;
+    var dsOk = document.getElementById('fpw-consent-ds').checked;
+    if (!agbOk || !dsOk) { errEl.textContent = 'Bitte AGB und Datenschutzerklärung akzeptieren, um fortzufahren'; return; }
+  }
   showLoading('Passwort wird gespeichert…');
   try {
     var { error } = await sb.auth.updateUser({ password: pw });
     if (error) { hideLoading(); errEl.textContent = '❌ ' + error.message; return; }
     await sb.from('profiles').update({ must_change_pw: false }).eq('id', SB_USER.id);
+    if (consentBlockVisible) await recordLegalConsent();
     var me = USERS.find(function(x){ return x.id === SB_USER.id; });
     if (me) me.must_change_pw = false;
     document.getElementById('force-pw-screen').classList.add('hidden');
     hideLoading();
     toast('✅ Passwort geändert');
     finishLogin(me || CUR_USER);
+  } catch (e) {
+    hideLoading();
+    errEl.textContent = '❌ ' + e.message;
+  }
+}
+
+// Eigenständiger Zustimmungs-Bildschirm für wiederkehrende User, deren Zustimmung
+// (z.B. nach einer inhaltlichen Änderung der AGB/Datenschutzerklärung) veraltet ist.
+function showLegalConsentScreen() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('force-pw-screen').classList.add('hidden');
+  document.getElementById('legal-consent-screen').classList.remove('hidden');
+  document.getElementById('lc-consent-agb').checked = false;
+  document.getElementById('lc-consent-ds').checked = false;
+  document.getElementById('lc-error').textContent = '';
+}
+
+async function doLegalConsentOnly() {
+  var errEl = document.getElementById('lc-error');
+  errEl.textContent = '';
+  var agbOk = document.getElementById('lc-consent-agb').checked;
+  var dsOk = document.getElementById('lc-consent-ds').checked;
+  if (!agbOk || !dsOk) { errEl.textContent = 'Bitte AGB und Datenschutzerklärung akzeptieren, um fortzufahren'; return; }
+  showLoading('Wird gespeichert…');
+  try {
+    await recordLegalConsent();
+    document.getElementById('legal-consent-screen').classList.add('hidden');
+    hideLoading();
+    finishLogin(CUR_USER);
   } catch (e) {
     hideLoading();
     errEl.textContent = '❌ ' + e.message;
@@ -4773,6 +4894,7 @@ async function finishLogin(u) {
   CUR_USER = u;
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('force-pw-screen').classList.add('hidden');
+  document.getElementById('legal-consent-screen').classList.add('hidden');
   document.getElementById('acc-name').textContent = u.name;
   if (window.applyFabPosition) applyFabPosition();
   var avImg = document.getElementById('acc-av-img');
@@ -5235,6 +5357,7 @@ async function loadUsers() {
       project: row.project || '', // Projektzugehörigkeit
       hiddenInfo: row.hidden_info || [], // ausgeblendete Behandlungs-Hinweise
       emailNotifications: row.email_notifications !== false, // Standard: aktiviert
+      legalConsentVersion: row.legal_consent_version || null,
       must_change_pw: !!row.must_change_pw
     }));
 
@@ -5252,7 +5375,7 @@ async function loadUsers() {
               name: row.full_name || row.username || '?',
               username: row.username || '',
               photo: '', role: row.role || 'user', email: '',
-              project: '', hiddenInfo: [], emailNotifications: true, must_change_pw: false
+              project: '', hiddenInfo: [], emailNotifications: true, must_change_pw: false, legalConsentVersion: null
             });
           }
         });
@@ -5554,13 +5677,15 @@ async function onAuthSuccess(user) {
   let profile = USERS.find(u => u.id === user.id);
   if (!profile) {
     // Profil neu anlegen falls noch nicht vorhanden (Fallback)
-    profile = { id: user.id, name: user.email.split('@')[0], username: user.email.split('@')[0], photo:'', role: USERS.length===0?'admin':'user', email: user.email, must_change_pw: false };
+    profile = { id: user.id, name: user.email.split('@')[0], username: user.email.split('@')[0], photo:'', role: USERS.length===0?'admin':'user', email: user.email, must_change_pw: false, legalConsentVersion: null };
     USERS.push(profile);
   }
   hideLoading();
+  CUR_USER = profile;
   if (profile.must_change_pw) {
-    CUR_USER = profile;
     showForcePasswordScreen();
+  } else if (needsLegalConsent(profile)) {
+    showLegalConsentScreen();
   } else {
     loginUser(profile);
   }
@@ -5862,3 +5987,4 @@ window.addEventListener('load', function(){ fillYearDropdown(); setTimeout(sbIni
 </script>
 </body>
 </html>
+
