@@ -4984,6 +4984,7 @@ function loginUser(u) {
 
 async function finishLogin(u) {
   CUR_USER = u;
+  rememberCurrentSession(u);
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('force-pw-screen').classList.add('hidden');
   document.getElementById('legal-consent-screen').classList.add('hidden');
@@ -5065,6 +5066,73 @@ async function saveNewUser() {
   }
 }
 
+// ============================================================
+// SCHNELLER KONTOWECHSEL (basiert auf bereits angemeldeten Sitzungen
+// auf diesem Gerät — es wird zu keinem Zeitpunkt ein Passwort gespeichert)
+// ============================================================
+function getSavedAccounts() {
+  try { return JSON.parse(localStorage.getItem('pd_saved_accounts') || '{}'); } catch(e) { return {}; }
+}
+
+async function rememberCurrentSession(u) {
+  try {
+    var { data } = await sb.auth.getSession();
+    if (!data || !data.session) return;
+    var saved = getSavedAccounts();
+    saved[u.id] = {
+      userId: u.id,
+      name: u.name,
+      username: u.username || '',
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token
+    };
+    localStorage.setItem('pd_saved_accounts', JSON.stringify(saved));
+  } catch (e) { console.warn('Sitzung konnte nicht gemerkt werden:', e.message); }
+}
+
+function forgetSavedAccount(userId, event) {
+  if (event) event.stopPropagation();
+  var saved = getSavedAccounts();
+  delete saved[userId];
+  localStorage.setItem('pd_saved_accounts', JSON.stringify(saved));
+  openUserSettings();
+}
+
+function accountSwitcherHtml() {
+  var saved = getSavedAccounts();
+  var others = Object.keys(saved).filter(function(id){ return !CUR_USER || id !== CUR_USER.id; }).map(function(id){ return saved[id]; });
+  if (!others.length) return '';
+  return others.map(function(acc) {
+    return '<div class="hrow" onclick="switchToAccount(&quot;'+acc.userId+'&quot;)">'+
+      '<div class="hi">🔄</div>'+
+      '<div class="hinfo"><div class="ht">Zu „'+acc.name+'“ wechseln</div><div class="hs2">Gemerkte Sitzung auf diesem Gerät</div></div>'+
+      '<div class="ibtn" onclick="forgetSavedAccount(&quot;'+acc.userId+'&quot;, event)" title="Sitzung vergessen" style="font-size:14px">✕</div>'+
+    '</div>';
+  }).join('') + '<div class="dvd"></div>';
+}
+
+async function switchToAccount(userId) {
+  var saved = getSavedAccounts();
+  var entry = saved[userId];
+  if (!entry) return;
+  cs('sh-user-settings');
+  showLoading('Wechsle Konto…');
+  try {
+    var { data, error } = await sb.auth.setSession({ access_token: entry.access_token, refresh_token: entry.refresh_token });
+    if (error || !data || !data.session || !data.session.user) throw (error || new Error('Sitzung ungültig'));
+    hideLoading();
+    await onAuthSuccess(data.session.user);
+  } catch (e) {
+    hideLoading();
+    delete saved[userId];
+    localStorage.setItem('pd_saved_accounts', JSON.stringify(saved));
+    renderLoginScreen();
+    var unameField = document.getElementById('lg-username');
+    if (unameField) unameField.value = entry.username || '';
+    toast('Sitzung abgelaufen — bitte Passwort erneut eingeben');
+  }
+}
+
 function openUserSettings() {
   if (!CUR_USER) return;
   var body = document.getElementById('user-settings-body');
@@ -5073,6 +5141,7 @@ function openUserSettings() {
     : '<span style="font-size:28px">'+CUR_USER.name.charAt(0).toUpperCase()+'</span>';
   var adminBadge = isAdmin(CUR_USER) ? '<div style="color:var(--acc);font-size:13px;margin-top:4px">👑 Administrator</div>' : '';
   body.innerHTML =
+    accountSwitcherHtml() +
     '<div style="text-align:center;margin-bottom:20px">'+
       '<div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;margin:0 auto 10px;overflow:hidden;position:relative">'+av+'</div>'+
       '<div style="font-size:18px;font-weight:600">'+CUR_USER.name+'</div>'+
