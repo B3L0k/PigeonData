@@ -387,18 +387,23 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <div class="handle"></div>
   <div class="stit" id="te-sheet-title">➕ Neuer Eintrag</div>
   <input type="hidden" id="te-edit-id">
-  <div class="fg"><label class="fl">Bezeichnung (Symptom / Krankheit / Parasit)</label><input class="fi" id="te-name" type="text" placeholder="z.B. Kokzidien"></div>
-  <div class="fg"><label class="fl">Kategorie</label>
-    <select class="fi" id="te-category">
-      <option value="symptom">Symptom</option>
+  <div class="fg"><label class="fl" id="te-name-label">Bezeichnung</label><input class="fi" id="te-name" type="text" placeholder="z.B. Kokzidien"></div>
+  <div class="fg"><label class="fl">Gruppe</label>
+    <select class="fi" id="te-category" onchange="updateTreatmentEditFieldVisibility()">
       <option value="krankheit">Krankheit / Parasit</option>
+      <option value="symptom">Symptom</option>
+      <option value="medikament">Medikament</option>
+      <option value="futter">Futter</option>
+      <option value="supplement">Supplement</option>
     </select>
   </div>
-  <div class="fg"><label class="fl">Medikament</label><input class="fi" id="te-medikament" type="text" placeholder="z.B. Appercox Tabletten"></div>
-  <div class="fg"><label class="fl">Dosis</label><input class="fi" id="te-dosis" type="text" placeholder="z.B. 0,1 ml pro 100g Taube"></div>
-  <div class="fg"><label class="fl">Verabreichung</label><input class="fi" id="te-verabreichung" type="text" placeholder="z.B. ins Trinkwasser"></div>
-  <div class="fg"><label class="fl">Medikationsdauer</label><input class="fi" id="te-dauer" type="text" placeholder="z.B. 5 Tage, danach wiederholen"></div>
-  <div class="fg"><label class="fl">Nachbehandlung (z.B. Supplement)</label><input class="fi" id="te-nachbehandlung" type="text" placeholder="z.B. Nekton B nach Abklingen"></div>
+  <div id="te-behandlung-fields">
+    <div class="fg"><label class="fl">Medikament</label><input class="fi" id="te-medikament" type="text" placeholder="z.B. Appercox Tabletten"></div>
+    <div class="fg"><label class="fl">Dosis</label><input class="fi" id="te-dosis" type="text" placeholder="z.B. 0,1 ml pro 100g Taube"></div>
+    <div class="fg"><label class="fl">Verabreichung</label><input class="fi" id="te-verabreichung" type="text" placeholder="z.B. ins Trinkwasser"></div>
+    <div class="fg"><label class="fl">Medikationsdauer</label><input class="fi" id="te-dauer" type="text" placeholder="z.B. 5 Tage, danach wiederholen"></div>
+    <div class="fg"><label class="fl">Nachbehandlung (z.B. Supplement)</label><input class="fi" id="te-nachbehandlung" type="text" placeholder="z.B. Nekton B nach Abklingen"></div>
+  </div>
   <button class="btn1" onclick="saveTreatmentInfo()">Speichern</button>
   <button class="btn2" onclick="cs('sh-treatment-edit')">Abbrechen</button>
   <div id="te-error" style="color:var(--red);font-size:13px;text-align:center;min-height:18px;margin-top:6px"></div>
@@ -894,7 +899,17 @@ select.fi option{background:var(--sur);color:var(--tx)}
 
   <!-- INFO TAB (Behandlungsempfehlungen für Symptome/Krankheiten) -->
   <div id="admin-tab-info" style="display:none">
-    <p style="color:var(--mu);font-size:13px;margin-bottom:14px">Diese Behandlungsempfehlungen werden Usern angezeigt, sobald sie im Taubenprofil das jeweilige Symptom bzw. die Krankheit/den Parasiten auswählen.</p>
+    <p style="color:var(--mu);font-size:13px;margin-bottom:14px">Diese Einträge stehen den Usern als Auswahl-Chips zur Verfügung (Symptome/Krankheiten im Taubenprofil, Futter/Supplements/Medikamente bei den Einträgen). Bei Symptomen/Krankheiten erscheint zusätzlich der Behandlungs-Hinweis.</p>
+    <div class="fg" style="margin-bottom:10px">
+      <label class="fl">Gruppe</label>
+      <select class="fi" id="admin-info-category-filter" onchange="renderAdminTreatmentInfo()">
+        <option value="krankheit">Krankheiten / Parasiten</option>
+        <option value="symptom">Symptome</option>
+        <option value="medikament">Medikamente</option>
+        <option value="futter">Futter</option>
+        <option value="supplement">Supplements</option>
+      </select>
+    </div>
     <button class="btn1" style="margin-bottom:16px" onclick="openTreatmentEditSheet(null)">＋ Neuer Eintrag</button>
     <div id="admin-info-list"></div>
   </div>
@@ -1142,12 +1157,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <!-- FUETTERN -->
   <div id="sec-fuettern" style="display:none">
     <div class="fg"><label class="fl">Futter</label>
-      <div class="chips" id="lf-food">
-        <div class="chip" onclick="tc(this)">Zuchtmischung</div><div class="chip" onclick="tc(this)">Reisemischung</div>
-        <div class="chip" onclick="tc(this)">Mais</div><div class="chip" onclick="tc(this)">Erbsen</div>
-        <div class="chip" onclick="tc(this)">Gerste</div><div class="chip" onclick="tc(this)">Weizen</div>
-        <div class="chip" onclick="tc(this)">Hanf</div><div class="chip" onclick="tc(this)">Pellets</div><div class="chip" onclick="tc(this)">Breimischung</div>
-      </div>
+      <div class="chips" id="lf-food"></div>
     </div>
     <div class="fg"><label class="fl">Eigenes Futter</label><input class="fi" id="lf-food2" placeholder="z.B. Hirse, Sonnenblumenkerne..." type="text"></div>
     <div class="frow">
@@ -1155,17 +1165,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
       <div class="fg"><label class="fl">Einheit</label><select class="fi" id="lf-unit"><option>Gramm</option><option>ml</option><option>EL</option></select></div>
     </div>
     <div class="fg"><label class="fl">Supplement</label>
-      <div class="chips" id="lf-supp">
-        <div class="chip" onclick="tc(this)">Entrobac</div>
-        <div class="chip" onclick="tc(this)">Korvimin</div>
-        <div class="chip" onclick="tc(this)">Nekton B</div>
-        <div class="chip" onclick="tc(this)">Nekton Calcium Pulver</div>
-        <div class="chip" onclick="tc(this)">Nekton Tonic K</div>
-        <div class="chip" onclick="tc(this)">Phyto Nephro</div>
-        <div class="chip" onclick="tc(this)">Prime</div>
-        <div class="chip" onclick="tc(this)">Tollyamin forte</div>
-        <div class="chip" onclick="tc(this)">Vitamin ADEC</div>
-      </div>
+      <div class="chips" id="lf-supp"></div>
     </div>
     <div class="fg"><label class="fl">Eigenes Supplement</label><input class="fi" id="lf-supp2" placeholder="z.B. Apfelessig..." type="text"></div>
   </div>
@@ -1193,24 +1193,7 @@ select.fi option{background:var(--sur);color:var(--tx)}
   <!-- MEDIKATION -->
   <div id="sec-medikation" style="display:none">
     <div class="fg"><label class="fl">💊 Medikament</label>
-      <div class="chips" id="lf-mname">
-        <div class="chip" onclick="tc(this)">Antiworm</div>
-        <div class="chip" onclick="tc(this)">Appercox Liquid</div>
-        <div class="chip" onclick="tc(this)">Appercox Tabletten</div>
-        <div class="chip" onclick="tc(this)">Bepanthen Augen &amp; Nasensalbe</div>
-        <div class="chip" onclick="tc(this)">Betaisodona Lösung</div>
-        <div class="chip" onclick="tc(this)">Corneregel Augensalbe</div>
-        <div class="chip" onclick="tc(this)">Euphrasia Augentropfen</div>
-        <div class="chip" onclick="tc(this)">Frubiase Calcium</div>
-        <div class="chip" onclick="tc(this)">Kolloidales Silberspray</div>
-        <div class="chip" onclick="tc(this)">Manuka Lind Salbe</div>
-        <div class="chip" onclick="tc(this)">Manuka Lind Spray</div>
-        <div class="chip" onclick="tc(this)">Nystaderm</div>
-        <div class="chip" onclick="tc(this)">Sab Simplex Suspension</div>
-        <div class="chip" onclick="tc(this)">Traumeel vet Salbe</div>
-        <div class="chip" onclick="tc(this)">Traumeel vet Tabletten</div>
-        <div class="chip" onclick="tc(this)">Tricho Tabs</div>
-      </div>
+      <div class="chips" id="lf-mname"></div>
     </div>
     <div class="fg"><label class="fl">Eigenes Medikament</label><input class="fi" id="lf-mname2" placeholder="z.B. Ronidazol, Baytril..." type="text" oninput="renderMedDosageFields()"></div>
     <div id="lf-med-dosage-container"></div>
@@ -2125,23 +2108,26 @@ async function loadTreatmentInfo() {
   renderPigFormChips();
 }
 
-// Befüllt die Symptom-/Krankheits-Chips im Taubenformular dynamisch aus den
-// Behandlungsinfos, statt einer fest hinterlegten Liste — neu angelegte
-// (und vom Admin freigegebene) Einträge erscheinen so automatisch, ohne
-// dass der Code dafür angepasst werden muss.
+// Befüllt alle Auswahl-Chips (Symptome/Krankheiten im Taubenprofil, Futter/
+// Supplements/Medikamente bei den Einträgen) dynamisch aus den in der Admin-
+// Verwaltung hinterlegten Daten, statt fest hinterlegter Listen — neu
+// angelegte (und vom Admin freigegebene) Einträge erscheinen so automatisch,
+// ohne dass der Code dafür angepasst werden muss.
 function renderPigFormChips() {
-  var symptEl = document.getElementById('pf-symp');
-  var disEl = document.getElementById('pf-dis');
-  if (!symptEl || !disEl) return;
-  var symptOn = chips('pf-symp');
-  var disOn = chips('pf-dis');
   function chipHtml(name, isOn) {
     return '<div class="chip'+(isOn?' on':'')+'" onclick="tc(this)">'+name+'</div>';
   }
-  var symptoms = TREATMENT_INFO_LIST.filter(function(r){ return r.category === 'symptom'; });
-  var diseases = TREATMENT_INFO_LIST.filter(function(r){ return r.category === 'krankheit'; });
-  symptEl.innerHTML = symptoms.map(function(r){ return chipHtml(r.name, symptOn.indexOf(r.name) >= 0); }).join('');
-  disEl.innerHTML = diseases.map(function(r){ return chipHtml(r.name, disOn.indexOf(r.name) >= 0); }).join('');
+  function buildGroup(elId, category) {
+    var el = document.getElementById(elId); if (!el) return;
+    var currentlyOn = chips(elId);
+    var items = TREATMENT_INFO_LIST.filter(function(r){ return r.category === category; });
+    el.innerHTML = items.map(function(r){ return chipHtml(r.name, currentlyOn.indexOf(r.name) >= 0); }).join('');
+  }
+  buildGroup('pf-symp', 'symptom');
+  buildGroup('pf-dis', 'krankheit');
+  buildGroup('lf-food', 'futter');
+  buildGroup('lf-supp', 'supplement');
+  buildGroup('lf-mname', 'medikament');
 }
 
 function maybeShowTreatmentInfo(name) {
@@ -2826,37 +2812,46 @@ async function notifyByEmail(toUserId, subject, bodyText) {
 }
 
 // --- Admin: Verwaltung der Behandlungsinfos ---
+var TREATMENT_CATEGORY_LABEL = {
+  krankheit: 'Krankheiten / Parasiten', symptom: 'Symptome',
+  medikament: 'Medikamente', futter: 'Futter', supplement: 'Supplements'
+};
+
 function renderAdminTreatmentInfo() {
   var list = document.getElementById('admin-info-list'); if (!list) return;
-  if (!TREATMENT_INFO_LIST.length) { list.innerHTML = '<div class="empty"><div class="ei">📋</div><p>Noch keine Einträge vorhanden.</p></div>'; return; }
-  var byCat = { symptom: [], krankheit: [] };
-  TREATMENT_INFO_LIST.forEach(function(r){ (byCat[r.category]||byCat.krankheit).push(r); });
-  function section(title, rows) {
-    if (!rows.length) return '';
-    return '<div class="stit2" style="margin:14px 0 8px">'+title+'</div>' + rows.map(function(r) {
-      var hasInfo = r.medikament||r.dosis||r.verabreichung||r.dauer||r.nachbehandlung;
-      return '<div class="lentry">'+
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
-          '<div style="flex:1">'+
-            '<div style="font-weight:600;font-size:14px">'+r.name+'</div>'+
-            (hasInfo ? '<div style="font-size:12px;color:var(--mu);margin-top:2px">'+(r.medikament||'—')+'</div>' : '<div style="font-size:12px;color:var(--orn);margin-top:2px">In Arbeit</div>')+
-          '</div>'+
-          '<div style="display:flex;gap:4px;flex-shrink:0">'+
-            '<button onclick="openTreatmentEditSheet(&quot;'+r.id+'&quot;)" style="background:transparent;border:none;font-size:16px;cursor:pointer">✏️</button>'+
-            '<button onclick="deleteTreatmentInfo(&quot;'+r.id+'&quot;)" style="background:transparent;border:none;color:var(--red);font-size:16px;cursor:pointer">🗑</button>'+
-          '</div>'+
+  var cat = document.getElementById('admin-info-category-filter').value;
+  var rows = TREATMENT_INFO_LIST.filter(function(r){ return r.category === cat; });
+  var showBehandlung = (cat === 'krankheit' || cat === 'symptom');
+  if (!rows.length) { list.innerHTML = '<div class="empty"><div class="ei">📋</div><p>Noch keine Einträge in dieser Gruppe.</p></div>'; return; }
+  list.innerHTML = rows.map(function(r) {
+    var hasInfo = r.medikament||r.dosis||r.verabreichung||r.dauer||r.nachbehandlung;
+    return '<div class="lentry">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+        '<div style="flex:1">'+
+          '<div style="font-weight:600;font-size:14px">'+r.name+'</div>'+
+          (showBehandlung ? (hasInfo ? '<div style="font-size:12px;color:var(--mu);margin-top:2px">'+(r.medikament||'—')+'</div>' : '<div style="font-size:12px;color:var(--orn);margin-top:2px">In Arbeit</div>') : '')+
         '</div>'+
-      '</div>';
-    }).join('');
-  }
-  list.innerHTML = section('Symptome', byCat.symptom) + section('Krankheiten / Parasiten', byCat.krankheit);
+        '<div style="display:flex;gap:4px;flex-shrink:0">'+
+          '<button onclick="openTreatmentEditSheet(&quot;'+r.id+'&quot;)" style="background:transparent;border:none;font-size:16px;cursor:pointer">✏️</button>'+
+          '<button onclick="deleteTreatmentInfo(&quot;'+r.id+'&quot;)" style="background:transparent;border:none;color:var(--red);font-size:16px;cursor:pointer">🗑</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function updateTreatmentEditFieldVisibility() {
+  var cat = document.getElementById('te-category').value;
+  var showBehandlung = (cat === 'krankheit' || cat === 'symptom');
+  document.getElementById('te-behandlung-fields').style.display = showBehandlung ? 'block' : 'none';
+  document.getElementById('te-name-label').textContent = showBehandlung ? 'Bezeichnung (Symptom / Krankheit / Parasit)' : 'Bezeichnung';
 }
 
 function openTreatmentEditSheet(id) {
   var r = id ? TREATMENT_INFO_LIST.find(function(x){return x.id===id;}) : null;
   document.getElementById('te-edit-id').value = id || '';
   document.getElementById('te-name').value = r ? r.name : '';
-  document.getElementById('te-category').value = r ? r.category : 'symptom';
+  document.getElementById('te-category').value = r ? r.category : document.getElementById('admin-info-category-filter').value;
   document.getElementById('te-medikament').value = r ? (r.medikament||'') : '';
   document.getElementById('te-dosis').value = r ? (r.dosis||'') : '';
   document.getElementById('te-verabreichung').value = r ? (r.verabreichung||'') : '';
@@ -2864,6 +2859,7 @@ function openTreatmentEditSheet(id) {
   document.getElementById('te-nachbehandlung').value = r ? (r.nachbehandlung||'') : '';
   document.getElementById('te-error').textContent = '';
   document.getElementById('te-sheet-title').textContent = id ? '✏️ Eintrag bearbeiten' : '➕ Neuer Eintrag';
+  updateTreatmentEditFieldVisibility();
   openSheet('sh-treatment-edit');
 }
 
